@@ -268,8 +268,8 @@
   .lbl-cell.editable-text:empty::before{
     content:"PASARAN";
     opacity:.35;
-    font-size:14px;
-    letter-spacing:2px;
+    font-size:18px;
+    letter-spacing:4px;
     font-style:normal;
   }
 
@@ -1064,7 +1064,1093 @@ function hapusData(jenis, btn){
         document.getElementById('res3').innerText = res3;
         document.getElementById('res4').innerText = res4;
     }
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Hasil Pengeluaran</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,500;1,600;1,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#14100a;
+    --panel:#241c10;
+    --panel-2:#302514;
+    --ink:#fdf1d8;
+    --ink-dim:#dcb876;
+    --ink-faint:#a98c52;
+    --line:rgba(230,190,80,.22);
+    --line-strong:rgba(230,190,80,.55);
+    --gold:#e6c04a;
+    --gold-bright:#ffe49a;
+    --gold-deep:#9c7a2c;
+    --font-display:'Fraunces',serif;
+    --font-body:'Work Sans',sans-serif;
+    --font-mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    position:relative;
+    background:var(--void);
+    font-family:var(--font-body);
+    padding:22px 16px 34px;
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:18px;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  .bg-photo{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    background-image:url("https://i.pinimg.com/736x/81/67/87/816787d7cf30bbeea01ee4d097abf7c6.jpg");
+    background-size:cover;
+    background-position:center top;
+    background-repeat:no-repeat;
+    filter:grayscale(1) sepia(1) saturate(2.4) hue-rotate(-8deg) contrast(1.08) brightness(.58);
+    pointer-events:none;
+  }
+  .bg-photo::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:1;
+    background:
+      radial-gradient(ellipse 640px 420px at 50% 4%, rgba(255,228,154,.45), transparent 62%),
+      conic-gradient(from 200deg at 50% -6%, transparent 0deg, rgba(230,190,80,.16) 90deg, transparent 180deg, rgba(230,190,80,.12) 260deg, transparent 360deg);
+    mix-blend-mode:screen;
+  }
+  .bg-photo::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+      radial-gradient(ellipse 900px 480px at 50% -10%, rgba(255,228,154,.20), transparent 60%),
+      radial-gradient(ellipse 700px 900px at 50% 110%, rgba(156,122,44,.32), transparent 65%),
+      linear-gradient(180deg, rgba(20,16,10,.42), rgba(20,16,10,.68) 45%, var(--void) 92%);
+  }
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:0;
+    background-image:repeating-linear-gradient(0deg, rgba(230,190,80,.05) 0px, rgba(230,190,80,.05) 1px, transparent 1px, transparent 3px);
+    mix-blend-mode:overlay;
+  }
+  body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:0;
+    opacity:.3;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='90' height='90'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/></svg>");
+  }
+  body > *{ position:relative; z-index:1; }
 
+  .hero{
+    width:100%;
+    max-width:520px;
+    text-align:center;
+    padding:2px 0 0;
+  }
+  .hero-title{
+    font-family:var(--font-display);
+    font-style:italic;
+    font-weight:600;
+    font-size:clamp(30px,7.5vw,44px);
+    letter-spacing:.3px;
+    margin:6px 0 5px;
+    color:var(--gold-bright);
+    text-shadow:0 0 44px rgba(255,228,154,.28), 0 0 90px rgba(230,190,80,.14);
+  }
+  .hero-rule{
+    width:110px;
+    height:1px;
+    margin:0 auto 10px;
+    background:linear-gradient(90deg,transparent,var(--line-strong),transparent);
+  }
+  .hero-sub{
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--ink-faint);
+    letter-spacing:1px;
+    text-transform:uppercase;
+  }
+  .hero-sub span{ color:var(--gold-bright); font-weight:600; }
+
+  .section-tag{
+    width:100%;
+    max-width:520px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:3px;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+    margin-top:2px;
+  }
+  .section-tag::before, .section-tag::after{
+    content:"";
+    height:1px;
+    flex:1;
+    background:var(--line);
+  }
+
+  .block{
+    width:100%;
+    max-width:520px;
+    border-radius:3px;
+    overflow:hidden;
+    position:relative;
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    box-shadow:
+      0 24px 50px rgba(0,0,0,.6),
+      0 0 0 1px var(--line);
+  }
+  .block::before{
+    content:"";
+    position:absolute;
+    top:0; left:0; right:0;
+    height:12px;
+    background-image:radial-gradient(circle at 10px 6px, var(--void) 6px, transparent 6.4px);
+    background-size:20px 12px;
+    background-repeat:repeat-x;
+    z-index:2;
+  }
+  .block::after{
+    position:absolute;
+    top:16px;
+    right:18px;
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:10.5px;
+    letter-spacing:3px;
+    color:var(--ink-faint);
+    border:1px solid var(--line-strong);
+    border-radius:20px;
+    padding:4px 10px;
+    z-index:2;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    position:relative;
+    z-index:1;
+  }
+  .lot-table{ margin-top:0; }
+  .lot-table td{
+    border:1px solid var(--line);
+    padding:7px 14px;
+    font-weight:500;
+    font-size:14.5px;
+    letter-spacing:.2px;
+  }
+
+  .lbl-cell{
+    background:transparent;
+    color:var(--gold-bright);
+    text-align:center;
+    width:36%;
+    font-family:var(--font-display);
+    font-style:italic;
+    font-weight:600;
+    font-size:19px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    white-space:nowrap;
+    overflow:visible;
+    text-shadow:0 0 18px rgba(230,190,80,.25);
+    border-right:1px dashed var(--line-strong) !important;
+  }
+  .block-sg .lbl-cell{ color:var(--gold-bright); }
+  .block-ca .lbl-cell{ color:var(--gold-bright); }
+
+  .val-cell{
+    background:rgba(230,190,80,.05);
+    text-align:center;
+  }
+  .info-cell{
+    background:transparent;
+    color:var(--ink-dim);
+    font-family:var(--font-mono);
+    font-weight:500;
+    font-size:13px;
+    letter-spacing:.2px;
+  }
+  #sg-title, #ca-title{
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+  }
+
+  .editable{
+    background:#050506;
+    border:2px dashed var(--line-strong);
+    outline:none;
+    width:92%;
+    text-align:center;
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:18px;
+    letter-spacing:3px;
+    color:var(--ink);
+    border-radius:4px;
+    padding:5px 4px;
+    transition:box-shadow .15s ease, background .15s ease, border-color .15s ease;
+  }
+  .editable:focus{
+    background:#0f0b04;
+    border-color:var(--gold-bright);
+    box-shadow:0 0 0 3px rgba(230,190,80,.18);
+  }
+  .editable::placeholder{
+    color:var(--ink-faint);
+    opacity:.75;
+    letter-spacing:2px;
+  }
+
+  .editable-text{
+    background:rgba(230,190,80,.08);
+    border:2px dashed var(--line-strong);
+    outline:none;
+    border-radius:4px;
+    padding:2px 8px;
+    display:inline-block;
+    font-weight:600;
+    color:var(--ink);
+    white-space:nowrap;
+    transition:box-shadow .15s ease, background .15s ease, border-color .15s ease;
+  }
+  .editable-text:focus{
+    background:rgba(230,190,80,.14);
+    border-color:var(--gold-bright);
+    box-shadow:0 0 0 3px rgba(230,190,80,.16);
+  }
+
+  .lbl-cell.editable-text{
+    display:table-cell;
+    background:transparent;
+    border-color:transparent !important;
+    width:36%;
+  }
+  .lbl-cell.editable-text:empty::before{
+    content:"PASARAN";
+    opacity:.35;
+    font-size:14px;
+    letter-spacing:2px;
+    font-style:normal;
+  }
+
+  .day-cell.editable-text{ display:table-cell; }
+  .date-cell.editable-text{ display:table-cell; }
+
+  .auto-text{
+    font-weight:600;
+    font-family:var(--font-mono);
+    color:var(--ink);
+  }
+  span.auto-text{
+    display:inline-block;
+    padding:2px 4px;
+  }
+  td.auto-text{
+    display:table-cell;
+  }
+
+  td.shio-name.editable-text{ display:table-cell; background:transparent; border-color:var(--line); }
+  td.shio-nums.editable-text{ display:table-cell; background:transparent; border-color:var(--line); }
+
+  .shio-wrap{
+    width:100%;
+    max-width:520px;
+    border-radius:3px;
+    overflow:hidden;
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    box-shadow:0 24px 50px rgba(0,0,0,.6), 0 0 0 1px var(--line);
+  }
+  .shio-header-row td{
+    border:1px solid var(--line);
+    padding:7px;
+    font-weight:700;
+    text-align:center;
+    font-size:14px;
+    font-family:var(--font-mono);
+    letter-spacing:2px;
+    text-transform:uppercase;
+  }
+  .day-cell{ background:rgba(230,190,80,.12); color:var(--ink); }
+  .date-cell{ background:rgba(230,190,80,.06); color:var(--ink-dim); }
+  .shio-title-row td{
+    background:#050506;
+    color:var(--ink-faint);
+    text-align:center;
+    font-family:var(--font-mono);
+    font-weight:600;
+    letter-spacing:2px;
+    border:1px solid var(--line);
+    padding:5px;
+    font-size:10px;
+    opacity:.7;
+  }
+  .shio-table td{
+    border:1px solid var(--line);
+    padding:6px 14px;
+    font-weight:500;
+  }
+  .shio-table tr:nth-child(odd) .shio-name{ background:rgba(230,190,80,.05); }
+  .shio-table tr:nth-child(even) .shio-name{ background:rgba(230,190,80,.08); }
+  .shio-table tr:nth-child(odd) .shio-nums{ background:rgba(230,190,80,.05); }
+  .shio-table tr:nth-child(even) .shio-nums{ background:rgba(230,190,80,.09); }
+
+  .shio-name{
+    color:var(--gold-bright);
+    width:38%;
+    font-family:var(--font-display);
+    font-style:italic;
+    font-size:14.5px;
+  }
+  .shio-nums{
+    color:var(--ink-dim);
+    font-family:var(--font-mono);
+    font-size:13.5px;
+    letter-spacing:.3px;
+    overflow-x:auto;
+  }
+
+  .copy-row{
+    background:rgba(230,190,80,.05);
+    text-align:center;
+    padding:7px 14px !important;
+  }
+  .copy-btn{
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:12px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--gold-bright);
+    background:transparent;
+    border:2px dashed var(--line-strong);
+    border-radius:4px;
+    width:92%;
+    padding:7px 6px;
+    cursor:pointer;
+    transition:box-shadow .15s ease, background .15s ease, border-color .15s ease;
+  }
+  .copy-btn:hover{
+    background:rgba(230,190,80,.10);
+    border-color:var(--gold-bright);
+  }
+  .copy-btn:active{
+    box-shadow:0 0 0 3px rgba(230,190,80,.16);
+  }
+  .copy-btn.copied{
+    border-color:var(--gold-bright);
+    color:var(--void);
+    background:var(--gold);
+  }
+
+  .clear-row{
+    background:#050506;
+    text-align:center;
+    padding:6px 14px !important;
+  }
+  .clear-btn{
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:10.5px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    background:transparent;
+    border:1px solid var(--line-strong);
+    border-radius:20px;
+    padding:5px 18px;
+    cursor:pointer;
+    transition:transform .12s ease, background .12s ease, color .12s ease;
+  }
+  .clear-btn:hover{
+    transform:translateY(-1px);
+    background:rgba(230,190,80,.14);
+    color:var(--gold-bright);
+  }
+  .clear-btn:active{
+    transform:translateY(0);
+  }
+
+  /* ===== HITUNGAN TOTO SINGAPORE (tidak diubah) ===== */
+  .toto-wrap {
+    background-color: #000000;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #ffffff;
+    padding: 20px;
+  }
+  .toto-wrap table {
+    border-collapse: collapse;
+    background-color: #000000;
+    width: auto;
+  }
+  .toto-wrap td {
+    border: 1px solid #333333;
+    text-align: center;
+    padding: 3px 10px;
+    height: 20px;
+  }
+  .toto-wrap .header-main {
+    background-color: #00ff00;
+    color: #000000;
+    font-weight: normal;
+    font-size: 16px;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+  .toto-wrap .header-bola {
+    background-color: #c9daf8;
+    color: #000000;
+    font-weight: normal;
+    width: 70px;
+    white-space: nowrap;
+  }
+  .toto-wrap .bola-num {
+    background-color: #b6d7a8;
+    color: #000000;
+    font-weight: normal;
+    width: 50px;
+  }
+  .toto-wrap .tempel {
+    background-color: #fce5cd;
+    color: #000000;
+    font-weight: normal;
+  }
+  .toto-wrap .tempel input {
+    width: 45px;
+    background-color: #fce5cd;
+    border: none;
+    text-align: center;
+    font-weight: normal;
+    font-size: 14px;
+    color: #000000;
+    outline: none;
+    -moz-appearance: textfield;
+    padding: 0;
+    line-height: 1;
+  }
+  .toto-wrap .tempel input::-webkit-outer-spin-button,
+  .toto-wrap .tempel input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .toto-wrap .add-label {
+    background-color: #6aa84f;
+    color: #ffffff;
+    font-weight: normal;
+  }
+  .toto-wrap .add-val {
+    background-color: #b6d7a8;
+    color: #000000;
+    font-weight: normal;
+  }
+  .toto-wrap .add-val input {
+    width: 45px;
+    background-color: #b6d7a8;
+    border: none;
+    text-align: center;
+    font-weight: normal;
+    font-size: 14px;
+    color: #000000;
+    outline: none;
+    -moz-appearance: textfield;
+    padding: 0;
+    line-height: 1;
+  }
+  .toto-wrap .add-val input::-webkit-outer-spin-button,
+  .toto-wrap .add-val input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .toto-wrap .col-right-1 {
+    background-color: #fce5cd;
+    color: #000000;
+    font-weight: normal;
+    width: 75px;
+  }
+  .toto-wrap .col-right-2 {
+    background-color: #d5a6bd;
+    color: #000000;
+    font-weight: normal;
+    width: 75px;
+  }
+  .toto-wrap .col-right-3 {
+    background-color: #f6b26b;
+    color: #000000;
+    font-weight: normal;
+    width: 75px;
+  }
+  .toto-wrap .col-right-4 {
+    background-color: #8fe3ed;
+    color: #000000;
+    font-weight: normal;
+    width: 75px;
+  }
+  .toto-wrap .result-label {
+    background-color: #6fa8dc;
+    color: #000000;
+    font-weight: normal;
+    text-align: center;
+    width: 70px;
+  }
+  .toto-wrap .result-val {
+    background-color: #6fa8dc;
+    color: #000000;
+    font-weight: normal;
+    width: 50px;
+    font-size: 15px;
+  }
+  .toto-wrap .dark-row {
+    background-color: #000000;
+    border: none;
+  }
+</style>
+</head>
+<body>
+<div class="bg-photo"></div>
+
+<header class="hero">
+  <h1 class="hero-title">Riki Golan</h1>
+  <div class="hero-rule"></div>
+  <div class="hero-sub">Hasil Result &middot; <span id="hero-date">-</span></div>
+</header>
+
+<!-- SINGAPORE BLOCK -->
+<div class="block block-sg">
+  <table class="lot-table">
+    <tr>
+      <td colspan="2" class="clear-row">
+        <button type="button" class="clear-btn" onclick="hapusData('sg', this)"> Hapus Data</button>
+      </td>
+    </tr>
+    <tr>
+      <td class="lbl-cell editable-text" id="sg-name" contenteditable="true"></td>
+      <td class="info-cell" id="sg-title">Hasil Pengeluaran SINGAPORE</td>
+    </tr>
+    <tr>
+      <td class="val-cell">
+        <input class="editable" id="sg1" type="text" maxlength="4" inputmode="numeric" value="" placeholder="ANGKA">
+      </td>
+      <td class="info-cell" id="sg-hari-cell">Hari <span class="auto-text" id="sg-hari">Tuesday, 28 July 2026</span></td>
+    </tr>
+    <tr>
+      <td class="val-cell">
+        <input class="editable" id="sg2" type="text" maxlength="4" inputmode="numeric" value="" placeholder="ANGKA">
+      </td>
+      <td class="info-cell" id="sg-p1">Hadiah 1 : 8590</td>
+    </tr>
+    <tr>
+      <td class="val-cell">
+        <input class="editable" id="sg3" type="text" maxlength="4" inputmode="numeric" value="" placeholder="ANGKA">
+      </td>
+      <td class="info-cell" id="sg-shio">SHIO : Kerbau</td>
+    </tr>
+    <tr>
+      <td class="copy-row">
+        <button type="button" class="copy-btn" onclick="salinTeks('sg', this)">Salin Data</button>
+      </td>
+      <td class="info-cell" id="sg-p2">Hadiah 2 : 5917</td>
+    </tr>
+    <tr>
+      <td class="val-cell"></td>
+      <td class="info-cell" id="sg-p3">Hadiah 3 : 3898</td>
+    </tr>
+    <tr>
+      <td class="val-cell"></td>
+      <td class="info-cell">Selamat Kepada Pemenang, Salam Jp</td>
+    </tr>
+  </table>
+</div>
+
+<!-- CALIFORNIA BLOCK -->
+<div class="block block-ca">
+  <table class="lot-table">
+    <tr>
+      <td colspan="2" class="clear-row">
+        <button type="button" class="clear-btn" onclick="hapusData('ca', this)"> Hapus Data</button>
+      </td>
+    </tr>
+    <tr>
+      <td class="lbl-cell editable-text" id="ca-name" contenteditable="true"></td>
+      <td class="info-cell" id="ca-title">Hasil Pengeluaran CALIFORNIA</td>
+    </tr>
+    <tr>
+      <td class="val-cell">
+        <input class="editable" id="ca1" type="text" maxlength="5" inputmode="numeric" value="" placeholder="ANGKA">
+      </td>
+      <td class="info-cell" id="ca-hari-cell">Hari <span class="auto-text" id="ca-hari">Tuesday, 28 July 2026</span></td>
+    </tr>
+    <tr>
+      <td class="copy-row">
+        <button type="button" class="copy-btn" onclick="salinTeks('ca', this)">Salin Data</button>
+      </td>
+      <td class="info-cell" id="ca-result">Hasil : 3319</td>
+    </tr>
+    <tr>
+      <td class="val-cell"></td>
+      <td class="info-cell" id="ca-shio">SHIO : Tikus</td>
+    </tr>
+    <tr>
+    </tr>
+  </table>
+</div>
+
+<!-- SHIO REFERENCE TABLE -->
+<div class="section-tag">Referensi Shio</div>
+<div class="shio-wrap">
+  <table class="shio-table">
+    <tr class="shio-header-row">
+      <td class="day-cell auto-text" id="shio-day">Tuesday</td>
+      <td class="date-cell auto-text" id="shio-date">28 Jul 2026</td>
+    </tr>
+    <tr class="shio-title-row">
+      <td colspan="2">SHIO=====SHIO=====SHIO=====SHIO=====SHIO</td>
+    </tr>
+    <tr>
+      <td class="shio-name editable-text" contenteditable="true">Kuda</td><td class="shio-nums editable-text" contenteditable="true">01,13,25,37,49,61,73,85,97</td>
+    </tr>
+    <tr>
+      <td class="shio-name editable-text" contenteditable="true">Ular</td><td class="shio-nums editable-text" contenteditable="true">02,14,26,38,50,62,74,86,98</td>
+    </tr>
+    <tr>
+      <td class="shio-name editable-text" contenteditable="true">Naga</td><td class="shio-nums editable-text" contenteditable="true">03,15,27,39,51,63,75,87,99</td>
+    </tr>
+    <tr>
+      <td class="shio-name editable-text" contenteditable="true">Kelinci</td><td class="shio-nums editable-text" contenteditable="true">04,16,28,40,52,64,76,88,00</td>
+    </tr>
+    <tr>
+      <td class="shio-name editable-text" contenteditable="true">Harimau</td><td class="shio-nums editable-text" contenteditable="true">05,17,29,41,53,65,77,89</td>
+    </tr>
+    <tr>
+      <td class="shio-name editable-text" contenteditable="true">Kerbau</td><td class="shio-nums editable-text" contenteditable="true">06,18,30,42,54,66,78,90</td>
+    </tr>
+    <tr>
+      <td class="shio-name editable-text" contenteditable="true">Tikus</td><td class="shio-nums editable-text" contenteditable="true">07,19,31,43,55,67,79,91</td>
+    </tr>
+    <tr>
+      <td class="shio-name editable-text" contenteditable="true">Babi</td><td class="shio-nums editable-text" contenteditable="true">08,20,32,44,56,68,80,92</td>
+    </tr>
+    <tr>
+      <td class="shio-name editable-text" contenteditable="true">Anjing</td><td class="shio-nums editable-text" contenteditable="true">09,21,33,45,57,69,81,93</td>
+    </tr>
+    <tr>
+      <td class="shio-name editable-text" contenteditable="true">Ayam</td><td class="shio-nums editable-text" contenteditable="true">10,22,34,46,58,70,82,94</td>
+    </tr>
+    <tr>
+      <td class="shio-name editable-text" contenteditable="true">Monyet</td><td class="shio-nums editable-text" contenteditable="true">11,23,35,47,59,71,83,95</td>
+    </tr>
+    <tr>
+      <td class="shio-name editable-text" contenteditable="true">Kambing</td><td class="shio-nums editable-text" contenteditable="true">12,24,36,48,60,72,84,96</td>
+    </tr>
+  </table>
+</div>
+
+<!-- HITUNGAN TOTO SINGAPORE -->
+<div class="section-tag">Modul Hitung Cepat</div>
+<div class="toto-wrap">
+    <table>
+        <!-- Baris 1: Judul Utama -->
+        <tr>
+            <td colspan="8" class="header-main">HITUNGAN TOTO SINGAPORE</td>
+        </tr>
+
+        <!-- Baris 2: Header Bola -->
+        <tr>
+            <td class="header-bola">BOLA</td>
+            <td class="bola-num">1</td>
+            <td class="bola-num">2</td>
+            <td class="bola-num">3</td>
+            <td class="bola-num">4</td>
+            <td class="bola-num">5</td>
+            <td class="bola-num">6</td>
+            <td class="col-right-1" id="out1">-</td>
+        </tr>
+
+        <!-- Baris 3: TEMPEL -->
+        <tr>
+            <td class="header-bola">TEMPEL &gt;&gt;</td>
+            <td class="tempel"><input type="number" id="t1" value="" oninput="hitung()"></td>
+            <td class="tempel"><input type="number" id="t2" value="" oninput="hitung()"></td>
+            <td class="tempel"><input type="number" id="t3" value="" oninput="hitung()"></td>
+            <td class="tempel"><input type="number" id="t4" value="" oninput="hitung()"></td>
+            <td class="tempel"><input type="number" id="t5" value="" oninput="hitung()"></td>
+            <td class="tempel"><input type="number" id="t6" value="" oninput="hitung()"></td>
+            <td class="col-right-1" id="out2">-</td>
+        </tr>
+
+        <!-- Baris 4: Kosong hitam -->
+        <tr>
+            <td colspan="7" class="dark-row"></td>
+            <td class="col-right-1" id="out3">-</td>
+        </tr>
+
+        <!-- Baris 5: ADD -->
+        <tr>
+            <td class="add-label">ADD</td>
+            <td class="add-val"><input type="number" id="add1" value="" oninput="hitung()"></td>
+            <td colspan="5" class="dark-row"></td>
+            <td class="col-right-2" id="out4">-</td>
+        </tr>
+
+        <!-- Baris 6: Kosong hitam -->
+        <tr>
+            <td colspan="7" class="dark-row"></td>
+            <td class="col-right-3" id="out5">-</td>
+        </tr>
+
+        <!-- Baris 7: Kosong hitam -->
+        <tr>
+            <td colspan="7" class="dark-row"></td>
+            <td class="col-right-4" id="out6">-</td>
+        </tr>
+
+        <!-- Baris 8: Result -->
+        <tr>
+            <td colspan="2" class="dark-row"></td>
+            <td class="result-label">result</td>
+            <td class="result-val" id="res1">-</td>
+            <td class="result-val" id="res2">-</td>
+            <td class="result-val" id="res3">-</td>
+            <td class="result-val" id="res4">-</td>
+            <td class="dark-row"></td>
+        </tr>
+    </table>
+</div>
+
+<script>
+function right(str, n){
+  str = (str || "").toString();
+  return str.length <= n ? str : str.slice(-n);
+}
+
+// Nama hari & bulan dalam Bahasa Indonesia
+const HARI_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const BULAN_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const BULAN_ID_SINGKAT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+
+function isiTanggalHariIni(){
+  const now = new Date();
+  const hari = HARI_ID[now.getDay()];
+  const tanggal = now.getDate();
+  const bulan = BULAN_ID[now.getMonth()];
+  const bulanSingkat = BULAN_ID_SINGKAT[now.getMonth()];
+  const tahun = now.getFullYear();
+
+  const lengkap = `${hari}, ${tanggal} ${bulan} ${tahun}`;
+  const singkat = `${tanggal} ${bulanSingkat} ${tahun}`;
+
+  document.getElementById('sg-hari').textContent = lengkap;
+  document.getElementById('ca-hari').textContent = lengkap;
+  document.getElementById('shio-day').textContent = hari;
+  document.getElementById('shio-date').textContent = singkat;
+
+  const heroDate = document.getElementById('hero-date');
+  if(heroDate) heroDate.textContent = lengkap;
+}
+
+// Auto-shrink font size so text always fits fully inside its cell (no cropping)
+function autoFitText(el){
+  if(!el) return;
+  el.style.fontSize = '';
+  const maxSize = parseFloat(getComputedStyle(el).fontSize);
+  let fontSize = maxSize;
+  const minSize = 8;
+  while(el.scrollWidth > el.clientWidth && fontSize > minSize){
+    fontSize -= 0.5;
+    el.style.fontSize = fontSize + 'px';
+  }
+}
+
+function autoFitAll(){
+  document.querySelectorAll('.editable-text:not(.shio-nums)').forEach(autoFitText);
+}
+
+// Build a lookup { "01": "Kuda", ... } straight from the (editable) SHIO table
+function getShioLookup(){
+  const map = {};
+  document.querySelectorAll('.shio-table tr').forEach(tr=>{
+    const nameCell = tr.querySelector('.shio-name');
+    const numsCell = tr.querySelector('.shio-nums');
+    if(!nameCell || !numsCell) return;
+    const name = nameCell.textContent.trim();
+    const nums = numsCell.textContent.split(',').map(s=>s.trim()).filter(Boolean);
+    nums.forEach(n=>{
+      const key = n.length === 1 ? '0'+n : n;
+      map[key] = name;
+    });
+  });
+  return map;
+}
+
+function shioFromNumber(numStr, lookup){
+  if(!numStr) return "";
+  let last2 = numStr.toString().slice(-2);
+  if(last2.length === 1) last2 = '0'+last2;
+  return lookup[last2] || "";
+}
+
+function recalc(){
+  const sg1 = document.getElementById('sg1').value.trim();
+  const sg2 = document.getElementById('sg2').value.trim();
+  const sg3 = document.getElementById('sg3').value.trim();
+  const ca1 = document.getElementById('ca1').value.trim();
+
+  const lookup = getShioLookup();
+
+  // Singapore block
+  document.getElementById('sg-p1').textContent = `Hadiah 1 : ${right(sg1,4)}`;
+  document.getElementById('sg-p2').textContent = `Hadiah 2 : ${right(sg2,4)}`;
+  document.getElementById('sg-p3').textContent = `Hadiah 3 : ${right(sg3,4)}`;
+  document.getElementById('sg-shio').textContent = `SHIO : ${shioFromNumber(sg1, lookup)}`;
+
+  // California block
+  document.getElementById('ca-result').textContent = `Hasil : ${right(ca1,5)}`;
+  document.getElementById('ca-shio').textContent = `SHIO : ${shioFromNumber(ca1, lookup)}`;
+
+  // Nama pasaran (judul ikut menyesuaikan)
+  const sgName = document.getElementById('sg-name').textContent.trim();
+  const caName = document.getElementById('ca-name').textContent.trim();
+  document.getElementById('sg-title').textContent = `Hasil Pengeluaran ${sgName}`;
+  document.getElementById('ca-title').textContent = `Hasil Pengeluaran ${caName}`;
+
+  autoFitAll();
+}
+
+['sg1','sg2','sg3','ca1'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', recalc);
+});
+
+['sg-name','ca-name'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', recalc);
+});
+
+document.querySelectorAll('.shio-name, .shio-nums').forEach(cell=>{
+  cell.addEventListener('input', recalc);
+});
+
+isiTanggalHariIni();
+recalc();
+autoFitAll();
+
+// Paste otomatis: baris 1 = nama pasaran, baris berikutnya = angka (berurutan)
+function setupSmartPaste(blockEl){
+  if(!blockEl) return;
+  blockEl.addEventListener('paste', function(e){
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    if(!text) return;
+    const lines = text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    if(lines.length < 2) return; // biarkan paste normal jika cuma 1 baris
+
+    e.preventDefault();
+
+    const nameEl = blockEl.querySelector('.lbl-cell');
+    if(nameEl) nameEl.textContent = lines[0];
+
+    const inputs = blockEl.querySelectorAll('.editable');
+    for(let i=1; i<lines.length && (i-1)<inputs.length; i++){
+      const digits = lines[i].replace(/\D/g,'');
+      const inp = inputs[i-1];
+      const max = inp.maxLength > 0 ? inp.maxLength : digits.length;
+      inp.value = digits.slice(-max);
+    }
+
+    recalc();
+    autoFitAll();
+  });
+}
+
+document.querySelectorAll('.block').forEach(setupSmartPaste);
+
+// Salin semua info blok sekaligus (judul, hari, hasil, shio, ucapan)
+function salinTeks(jenis, btn){
+  let baris = [];
+
+  if(jenis === 'sg'){
+    baris = [
+      document.getElementById('sg-title').textContent.trim(),
+      document.getElementById('sg-hari-cell').textContent.trim(),
+      document.getElementById('sg-p1').textContent.trim(),
+      document.getElementById('sg-p2').textContent.trim(),
+      document.getElementById('sg-p3').textContent.trim(),
+      document.getElementById('sg-shio').textContent.trim(),
+      'Selamat Kepada Pemenang, Salam Jp'
+    ];
+  } else if(jenis === 'ca'){
+    baris = [
+      document.getElementById('ca-title').textContent.trim(),
+      document.getElementById('ca-hari-cell').textContent.trim(),
+      document.getElementById('ca-result').textContent.trim(),
+      document.getElementById('ca-shio').textContent.trim(),
+      'Selamat Kepada Pemenang, Salam Jp'
+    ];
+  }
+
+  const teks = baris.join('\n');
+
+  function tandaiTersalin(){
+    if(!btn) return;
+    const asli = btn.textContent;
+    btn.textContent = '✅ Tersalin!';
+    btn.classList.add('copied');
+    setTimeout(()=>{
+      btn.textContent = asli;
+      btn.classList.remove('copied');
+    }, 1500);
+  }
+
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(teks).then(tandaiTersalin).catch(()=>{
+      salinFallback(teks);
+      tandaiTersalin();
+    });
+  } else {
+    salinFallback(teks);
+    tandaiTersalin();
+  }
+}
+
+function salinFallback(teks){
+  const ta = document.createElement('textarea');
+  ta.value = teks;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try{ document.execCommand('copy'); }catch(e){}
+  document.body.removeChild(ta);
+}
+
+// Hapus nama pasaran & angka pada blok terkait
+function hapusData(jenis, btn){
+  if(jenis === 'sg'){
+    document.getElementById('sg-name').textContent = '';
+    document.getElementById('sg1').value = '';
+    document.getElementById('sg2').value = '';
+    document.getElementById('sg3').value = '';
+  } else if(jenis === 'ca'){
+    document.getElementById('ca-name').textContent = '';
+    document.getElementById('ca1').value = '';
+  }
+  recalc();
+  autoFitAll();
+}
+</script>
+
+<!-- Script HITUNGAN TOTO SINGAPORE (tidak diubah) -->
+<script>
+    document.addEventListener('paste', function (e) {
+        let activeEl = document.activeElement;
+        if (activeEl && activeEl.tagName === 'INPUT' && activeEl.type === 'number') {
+            let clipboardData = e.clipboardData || window.clipboardData;
+            let pastedData = clipboardData.getData('Text').trim();
+            let numbers = pastedData.split(/\s+/);
+
+            if (numbers.length >= 6) {
+                e.preventDefault();
+                let inputs = [
+                    document.getElementById('t1'),
+                    document.getElementById('t2'),
+                    document.getElementById('t3'),
+                    document.getElementById('t4'),
+                    document.getElementById('t5'),
+                    document.getElementById('t6')
+                ];
+
+                for (let i = 0; i < 6; i++) {
+                    if (inputs[i] && numbers[i] !== undefined) {
+                        inputs[i].value = numbers[i];
+                    }
+                }
+                hitung();
+            }
+        }
+    });
+
+    function hitung() {
+        // Mapping kolom sesuai spreadsheet:
+        // t1=Q91, t2=R91, t3=S91, t4=T91, t5=U91, t6=V91, add1=Q93
+        let t1 = parseFloat(document.getElementById('t1').value) || 0;
+        let t2 = parseFloat(document.getElementById('t2').value) || 0;
+        let t3 = parseFloat(document.getElementById('t3').value) || 0;
+        let t4 = parseFloat(document.getElementById('t4').value) || 0;
+        let t5 = parseFloat(document.getElementById('t5').value) || 0;
+        let t6 = parseFloat(document.getElementById('t6').value) || 0;
+        let add1 = parseFloat(document.getElementById('add1').value) || 0;
+
+        // out1 = SUM(Q91:V91)
+        let out1 = t1 + t2 + t3 + t4 + t5 + t6;
+
+        // out2 = W91*2
+        let out2 = out1 * 2;
+
+        // out3 = W92-Q91-V91
+        let out3 = out2 - t1 - t6;
+
+        // out4 = R91+S91
+        let out4 = t2 + t3;
+
+        // out5 = T91+U91
+        let out5 = t4 + t5;
+
+        // out6 = W93+Q93
+        let out6 = out3 + add1;
+
+        document.getElementById('out1').innerText = out1;
+        document.getElementById('out2').innerText = out2;
+        document.getElementById('out3').innerText = out3;
+        document.getElementById('out4').innerText = out4;
+        document.getElementById('out5').innerText = out5;
+        document.getElementById('out6').innerText = out6;
+
+        // res1 = RIGHT(W94,1) -> W94 = out4
+        let res1 = String(out4).slice(-1);
+
+        // res2 = RIGHT(W95,1) -> W95 = out5
+        let res2 = String(out5).slice(-1);
+
+        // res3 = IF(W96<99, LEFT(W96,1), MID(W96,2,1)) -> W96 = out6
+        let res3;
+        if (out6 < 99) {
+            res3 = String(out6).charAt(0) || "0";
+        } else {
+            res3 = String(out6).charAt(1) || "0";
+        }
+
+        // res4 = RIGHT(W96,1) -> W96 = out6
+        let res4 = String(out6).slice(-1);
+
+        document.getElementById('res1').innerText = res1;
+        document.getElementById('res2').innerText = res2;
+        document.getElementById('res3').innerText = res3;
+        document.getElementById('res4').innerText = res4;
+    }
+
+    hitung();
+</script>
+
+</body>
+</html>
     hitung();
 </script>
 
