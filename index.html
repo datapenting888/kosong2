@@ -1,782 +1,155 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Resi Gambar — Kirim &amp; Simpan</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --void:#1b1712;
-    --kraft:#efe6d3;
-    --kraft-dim:#d9cdae;
-    --stamp-red:#b8403a;
-    --ink-green:#3f6b52;
-    --foil-gold:#c9a227;
-    --line:#7a6a55;
-    --paper-shadow: rgba(0,0,0,.45);
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:
-      radial-gradient(ellipse at 20% -10%, #2a231a 0%, transparent 55%),
-      radial-gradient(ellipse at 90% 110%, #241d15 0%, transparent 50%),
-      var(--void);
-    color:var(--kraft);
-    font-family:'Work Sans', sans-serif;
-    min-height:100vh;
-    padding:40px 16px 80px;
-    display:flex;
-    justify-content:center;
-  }
-  .wrap{ width:100%; max-width:620px; }
-
-  /* header */
-  .counter-head{ text-align:center; margin-bottom:28px; }
-  .counter-head .eyebrow{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:11px; letter-spacing:.28em; text-transform:uppercase;
-    color:var(--foil-gold); margin-bottom:10px;
-  }
-  .counter-head h1{
-    font-family:'Special Elite', monospace;
-    font-size:clamp(28px,6vw,40px);
-    margin:0 0 8px;
-    letter-spacing:.02em;
-    color:var(--kraft);
-    text-shadow: 2px 2px 0 rgba(0,0,0,.4);
-  }
-  .counter-head p{
-    margin:0; color:var(--kraft-dim); font-size:14px; line-height:1.6;
-  }
-
-  /* dropzone */
-  .dropzone{
-    position:relative;
-    border:2px dashed var(--line);
-    border-radius:4px;
-    background:rgba(239,230,211,.03);
-    padding:36px 20px;
-    text-align:center;
-    cursor:pointer;
-    transition:border-color .2s ease, background .2s ease;
-  }
-  .dropzone:hover, .dropzone.drag{
-    border-color:var(--foil-gold);
-    background:rgba(201,162,39,.06);
-  }
-  .dropzone .icon{
-    width:44px;height:44px;margin:0 auto 12px;
-    display:flex;align-items:center;justify-content:center;
-    border:2px solid var(--line); border-radius:50%;
-  }
-  .dropzone .icon svg{ width:20px;height:20px; stroke:var(--kraft-dim); }
-  .dropzone .main-txt{ font-size:15px; font-weight:600; color:var(--kraft); }
-  .dropzone .sub-txt{ font-size:12.5px; color:var(--kraft-dim); margin-top:6px; font-family:'IBM Plex Mono', monospace; }
-  .dropzone input{ display:none; }
-
-  .snip-btn{
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    width:100%; margin-top:10px;
-    background:rgba(63,107,82,.1);
-    border:1px solid var(--ink-green);
-    color:#a9d3bd;
-    font-family:'IBM Plex Mono', monospace;
-    font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase;
-    border-radius:3px; padding:10px 12px; cursor:pointer;
-    transition:background .15s ease;
-  }
-  .snip-btn:hover{ background:rgba(63,107,82,.22); }
-  .snip-btn svg{ width:16px;height:16px; stroke:#a9d3bd; flex-shrink:0; }
-  .snip-btn:disabled{ opacity:.45; cursor:not-allowed; }
-
-  /* crop / snipping modal */
-  .snip-overlay{
-    display:none;
-    position:fixed; inset:0; z-index:9999;
-    background:rgba(10,8,5,.92);
-    flex-direction:column; align-items:center; justify-content:center;
-    padding:20px;
-  }
-  .snip-overlay.show{ display:flex; }
-  .snip-stage{
-    position:relative;
-    max-width:min(94vw, 1000px);
-    max-height:70vh;
-    user-select:none;
-    -webkit-user-select:none;
-    touch-action:none;
-  }
-  .snip-stage img{
-    display:block; max-width:min(94vw, 1000px); max-height:70vh;
-    width:auto; height:auto;
-    border:1px solid var(--line);
-    cursor:crosshair;
-  }
-  .snip-rect{
-    position:absolute; border:2px dashed var(--foil-gold);
-    background:rgba(201,162,39,.14);
-    display:none;
-    pointer-events:none;
-  }
-  .snip-dims{
-    position:absolute; bottom:-24px; left:0;
-    font-family:'IBM Plex Mono', monospace; font-size:11px;
-    color:var(--foil-gold); background:rgba(0,0,0,.6);
-    padding:2px 6px; border-radius:2px;
-    display:none;
-  }
-  .snip-hint{
-    font-family:'IBM Plex Mono', monospace; font-size:12px;
-    color:var(--kraft-dim); margin-top:14px; text-align:center;
-  }
-  .snip-actions{
-    display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; justify-content:center;
-  }
-  .snip-actions button{
-    font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600;
-    letter-spacing:.05em; text-transform:uppercase;
-    border-radius:3px; padding:9px 16px; cursor:pointer;
-  }
-  #snipUse{ background:var(--stamp-red); border:none; color:#fff5ef; }
-  #snipUse:disabled{ opacity:.4; cursor:not-allowed; }
-  #snipAll{ background:transparent; border:1px solid var(--ink-green); color:#a9d3bd; }
-  #snipCancel{ background:transparent; border:1px solid var(--line); color:var(--kraft-dim); }
-
-  /* preview */
-  .preview-card{
-    display:none;
-    margin-top:20px;
-    background:rgba(239,230,211,.04);
-    border:1px solid var(--line);
-    border-radius:4px;
-    padding:16px;
-    gap:14px;
-    align-items:center;
-  }
-  .preview-card.show{ display:flex; }
-  .preview-card img{
-    width:64px;height:64px;object-fit:cover;border-radius:3px;
-    border:1px solid var(--line);
-    flex-shrink:0;
-  }
-  .preview-meta{ flex:1; min-width:0; }
-  .preview-meta .fname{
-    font-size:13.5px; font-weight:600; color:var(--kraft);
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  }
-  .preview-meta .fsize{
-    font-size:11.5px; color:var(--kraft-dim); font-family:'IBM Plex Mono', monospace; margin-top:2px;
-  }
-  .send-btn{
-    font-family:'IBM Plex Mono', monospace;
-    background:var(--stamp-red); color:#fff5ef;
-    border:none; border-radius:3px;
-    padding:10px 16px; font-size:12.5px; font-weight:600;
-    letter-spacing:.06em; text-transform:uppercase;
-    cursor:pointer; flex-shrink:0;
-    transition:transform .12s ease, filter .12s ease;
-  }
-  .send-btn:hover{ filter:brightness(1.1); }
-  .send-btn:active{ transform:scale(.96); }
-  .send-btn:disabled{ opacity:.5; cursor:not-allowed; }
-
-  .progress-line{
-    display:none;
-    margin-top:14px;
-    height:3px; border-radius:2px; overflow:hidden;
-    background:rgba(255,255,255,.08);
-  }
-  .progress-line.show{ display:block; }
-  .progress-line .bar{
-    height:100%; width:30%;
-    background:var(--foil-gold);
-    animation:slide 1.1s ease-in-out infinite;
-  }
-  @keyframes slide{
-    0%{ transform:translateX(-100%); }
-    100%{ transform:translateX(340%); }
-  }
-
-  .error-msg{
-    display:none;
-    margin-top:14px;
-    font-size:13px;
-    color:#f0a8a2;
-    background:rgba(184,64,58,.12);
-    border:1px solid var(--stamp-red);
-    border-radius:3px;
-    padding:10px 12px;
-    font-family:'IBM Plex Mono', monospace;
-  }
-  .error-msg.show{ display:block; }
-
-  /* receipt */
-  .receipt{
-    display:none;
-    margin-top:26px;
-    background:var(--kraft);
-    color:#2a2318;
-    border-radius:2px;
-    position:relative;
-    padding:22px 22px 18px;
-    box-shadow:0 14px 30px var(--paper-shadow);
-  }
-  .receipt.show{
-    display:block;
-    animation:drop .38s cubic-bezier(.2,.9,.3,1.2);
-  }
-  @keyframes drop{
-    0%{ transform:translateY(-14px) rotate(-1.2deg); opacity:0; }
-    100%{ transform:translateY(0) rotate(-.6deg); opacity:1; }
-  }
-  .receipt::before, .receipt::after{
-    content:"";
-    position:absolute; left:0; right:0; height:10px;
-    background:
-      radial-gradient(circle at 6px 5px, var(--void) 4px, transparent 4.5px) repeat-x;
-    background-size:16px 10px;
-  }
-  .receipt::before{ top:-5px; }
-  .receipt::after{ bottom:-5px; transform:scaleY(-1); }
-  .receipt .rline{
-    display:flex; justify-content:space-between; align-items:baseline;
-    font-family:'IBM Plex Mono', monospace;
-    font-size:11.5px; text-transform:uppercase; letter-spacing:.08em;
-    color:#6b5c44; margin-bottom:6px;
-  }
-  .receipt .rline b{ color:#2a2318; font-weight:600; }
-  .receipt hr{ border:none; border-top:1px dashed #b6a888; margin:12px 0; }
-  .receipt .track{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:19px; font-weight:600; letter-spacing:.03em; color:var(--stamp-red);
-  }
-  .receipt .url-row{
-    margin-top:10px;
-    display:flex; gap:8px; align-items:center;
-    background:rgba(0,0,0,.04);
-    border:1px solid #cabe9e;
-    border-radius:3px;
-    padding:8px 10px;
-  }
-  .receipt .url-row a{
-    flex:1; min-width:0; overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-    font-family:'IBM Plex Mono', monospace; font-size:12.5px;
-    color:var(--ink-green); text-decoration:none;
-  }
-  .receipt .url-row a:hover{ text-decoration:underline; }
-  .rbtn{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase;
-    background:transparent; border:1px solid #a8987a; color:#4a3f2c;
-    border-radius:3px; padding:5px 9px; cursor:pointer; flex-shrink:0;
-  }
-  .rbtn:hover{ background:rgba(0,0,0,.06); }
-  .stamp{
-    position:absolute; top:14px; right:18px;
-    font-family:'Special Elite', monospace;
-    font-size:12px; letter-spacing:.06em;
-    color:var(--ink-green);
-    border:2px solid var(--ink-green);
-    border-radius:4px;
-    padding:3px 9px;
-    transform:rotate(8deg);
-    opacity:.85;
-  }
-
-  /* history */
-  .history{ margin-top:36px; }
-  .history-head{
-    display:flex; justify-content:space-between; align-items:center;
-    margin-bottom:12px;
-  }
-  .history-head h2{
-    font-family:'Special Elite', monospace; font-size:16px; margin:0; color:var(--kraft-dim);
-    letter-spacing:.02em;
-  }
-  .clear-all{
-    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--line);
-    background:none; border:none; cursor:pointer; text-decoration:underline;
-  }
-  .clear-all:hover{ color:var(--stamp-red); }
-  .hist-item{
-    display:flex; align-items:center; gap:12px;
-    background:rgba(239,230,211,.03);
-    border:1px solid var(--line);
-    border-left:3px solid var(--foil-gold);
-    border-radius:3px;
-    padding:10px 12px;
-    margin-bottom:8px;
-  }
-  .hist-item img{ width:40px;height:40px;object-fit:cover;border-radius:3px;flex-shrink:0; }
-  .hist-meta{ flex:1; min-width:0; }
-  .hist-meta a{
-    display:block; font-family:'IBM Plex Mono', monospace; font-size:12px;
-    color:var(--kraft); text-decoration:none;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  }
-  .hist-meta a:hover{ color:var(--foil-gold); }
-  .hist-meta .hdate{ font-size:10.5px; color:var(--kraft-dim); margin-top:2px; }
-  .hist-actions{ display:flex; gap:6px; flex-shrink:0; }
-  .hist-actions button{
-    background:none; border:1px solid var(--line); color:var(--kraft-dim);
-    border-radius:3px; padding:4px 7px; cursor:pointer; font-size:11px;
-  }
-  .hist-actions button:hover{ border-color:var(--stamp-red); color:var(--stamp-red); }
-  .empty-hist{
-    font-size:12.5px; color:var(--line); font-family:'IBM Plex Mono', monospace;
-    text-align:center; padding:14px 0;
-  }
-  .footnote{
-    text-align:center; margin-top:28px; font-size:11px; color:var(--line);
-    font-family:'IBM Plex Mono', monospace; line-height:1.7;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Photo to URL Sendiri</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 400px;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .upload-box {
+            border: 2px dashed #00b894;
+            padding: 20px;
+            border-radius: 8px;
+            background: #fdfdfd;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .file-label {
+            display: block;
+            color: #00b894;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button {
+            background-color: #00b894;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #019875;
+        }
+        #result {
+            margin-top: 20px;
+            word-break: break-all;
+            text-align: left;
+        }
+        .loading {
+            color: #e17055;
+            font-weight: bold;
+        }
+        .success-box {
+            background: #e8f8f5;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #00b894;
+        }
+        .success-box a {
+            color: #0984e3;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .success-box a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-<div class="wrap">
 
-  <div class="counter-head">
-    <div class="eyebrow">Loket Pengiriman Gambar</div>
-    <h1>Resi Gambar</h1>
-    <p>Kirim foto atau tangkapan layar, dapatkan link permanen — bisa dibuka kapan saja, di mana saja.</p>
-  </div>
-
-  <div class="dropzone" id="dropzone">
-    <div class="icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-    </div>
-    <div class="main-txt">Seret gambar ke sini, klik untuk pilih file</div>
-    <div class="sub-txt">atau tempel dari clipboard (Ctrl+V)</div>
-    <input type="file" id="fileInput" accept="image/*">
-  </div>
-
-  <button class="snip-btn" id="snipBtn" type="button">
-    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17h7"/><path d="M17.5 14v7"/></svg>
-    Ambil Cuplikan Layar
-  </button>
-
-  <div class="preview-card" id="previewCard">
-    <img id="previewImg" alt="pratinjau">
-    <div class="preview-meta">
-      <div class="fname" id="fname">—</div>
-      <div class="fsize" id="fsize">—</div>
-    </div>
-    <button class="send-btn" id="sendBtn">Kirim Sekarang</button>
-  </div>
-
-  <div class="progress-line" id="progressLine"><div class="bar"></div></div>
-  <div class="error-msg" id="errorMsg"></div>
-
-  <div class="receipt" id="receipt">
-    <div class="stamp">✓ Terkirim</div>
-    <div class="rline"><span>No. Resi</span></div>
-    <div class="track" id="trackCode">—</div>
-    <hr>
-    <div class="rline"><span>Nama Berkas</span><b id="rName">—</b></div>
-    <div class="rline"><span>Waktu Kirim</span><b id="rDate">—</b></div>
-    <div class="url-row">
-      <a id="rLink" href="#" target="_blank" rel="noopener">—</a>
-      <button class="rbtn" id="copyBtn">Salin</button>
-      <button class="rbtn" id="downloadBtn">Unduh</button>
-    </div>
-  </div>
-
-  <div class="history">
-    <div class="history-head">
-      <h2>Riwayat Kiriman</h2>
-      <button class="clear-all" id="clearAll">hapus semua</button>
-    </div>
-    <div id="historyList"></div>
-  </div>
-
-  <div class="footnote">
-    Gambar dikirim ke layanan hosting publik (catbox.moe) agar link tetap aktif meski<br>
-    tab ini ditutup. Riwayat &amp; pratinjau kecil disimpan lokal di perangkat ini.
-  </div>
-
-</div>
-
-<div class="snip-overlay" id="snipOverlay">
-  <div class="snip-stage" id="snipStage">
-    <img id="snipImg" alt="cuplikan layar">
-    <div class="snip-rect" id="snipRect"><div class="snip-dims" id="snipDims"></div></div>
-  </div>
-  <div class="snip-hint">Klik &amp; seret untuk memilih area, lalu gunakan pilihan Anda</div>
-  <div class="snip-actions">
-    <button id="snipUse" disabled>Gunakan Pilihan</button>
-    <button id="snipAll">Pakai Layar Penuh</button>
-    <button id="snipCancel">Batal</button>
-  </div>
-</div>
-
-<script>
-(function(){
-  const dropzone = document.getElementById('dropzone');
-  const fileInput = document.getElementById('fileInput');
-  const previewCard = document.getElementById('previewCard');
-  const previewImg = document.getElementById('previewImg');
-  const fname = document.getElementById('fname');
-  const fsize = document.getElementById('fsize');
-  const sendBtn = document.getElementById('sendBtn');
-  const progressLine = document.getElementById('progressLine');
-  const errorMsg = document.getElementById('errorMsg');
-  const receipt = document.getElementById('receipt');
-  const trackCode = document.getElementById('trackCode');
-  const rName = document.getElementById('rName');
-  const rDate = document.getElementById('rDate');
-  const rLink = document.getElementById('rLink');
-  const copyBtn = document.getElementById('copyBtn');
-  const downloadBtn = document.getElementById('downloadBtn');
-  const historyList = document.getElementById('historyList');
-  const clearAll = document.getElementById('clearAll');
-
-  const STORAGE_KEY = 'resi_gambar_history_v1';
-  let currentFile = null;
-
-  function humanSize(bytes){
-    if(bytes < 1024) return bytes + ' B';
-    if(bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
-    return (bytes/1024/1024).toFixed(2) + ' MB';
-  }
-
-  function formatDate(d){
-    return d.toLocaleString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
-  }
-
-  function makeTrackCode(url){
-    let seg = url.split('/').pop().split('.')[0] || '';
-    seg = seg.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8);
-    if(!seg) seg = Math.random().toString(36).slice(2,10).toUpperCase();
-    return 'RSI-' + seg;
-  }
-
-  function resizeThumb(file, maxW){
-    return new Promise((resolve) => {
-      const img = new Image();
-      const reader = new FileReader();
-      reader.onload = e => { img.src = e.target.result; };
-      img.onload = () => {
-        const scale = Math.min(1, maxW / img.width);
-        const w = Math.round(img.width * scale);
-        const h = Math.round(img.height * scale);
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', 0.7));
-      };
-      img.onerror = () => resolve('');
-      reader.readAsDataURL(file);
-    });
-  }
-
-  function loadHistory(){
-    try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-    catch(e){ return []; }
-  }
-
-  function saveHistory(list){
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
-    catch(e){ /* storage full — ignore silently, remote link still works */ }
-  }
-
-  function renderHistory(){
-    const list = loadHistory();
-    historyList.innerHTML = '';
-    if(list.length === 0){
-      historyList.innerHTML = '<div class="empty-hist">Belum ada kiriman.</div>';
-      return;
-    }
-    list.slice().reverse().forEach((item) => {
-      const row = document.createElement('div');
-      row.className = 'hist-item';
-      row.innerHTML = `
-        <img src="${item.thumb || ''}" alt="">
-        <div class="hist-meta">
-          <a href="${item.url}" target="_blank" rel="noopener">${item.track}</a>
-          <div class="hdate">${item.name} · ${item.date}</div>
+    <div class="container">
+        <h2>Photo to URL Converter</h2>
+        
+        <div class="upload-box" onclick="document.getElementById('imageFile').click()">
+            <span class="file-label" id="fileLabel">📂 Pilih atau Klik untuk Unggah Foto</span>
+            <input type="file" id="imageFile" accept="image/*" onchange="showFileName()">
         </div>
-        <div class="hist-actions">
-          <button data-act="copy" data-url="${item.url}">Salin</button>
-          <button data-act="del" data-id="${item.id}">Hapus</button>
-        </div>`;
-      historyList.appendChild(row);
-    });
-  }
 
-  historyList.addEventListener('click', (e) => {
-    const btn = e.target.closest('button');
-    if(!btn) return;
-    if(btn.dataset.act === 'copy'){
-      navigator.clipboard.writeText(btn.dataset.url).then(() => {
-        btn.textContent = 'Tersalin'; setTimeout(() => btn.textContent = 'Salin', 1200);
-      });
-    } else if(btn.dataset.act === 'del'){
-      const list = loadHistory().filter(i => i.id !== btn.dataset.id);
-      saveHistory(list);
-      renderHistory();
-    }
-  });
+        <button onclick="uploadImage()">Ubah Menjadi Link</button>
+        
+        <div id="result"></div>
+    </div>
 
-  clearAll.addEventListener('click', () => {
-    if(confirm('Hapus semua riwayat kiriman di perangkat ini? (Link yang sudah ada tetap aktif)')){
-      saveHistory([]);
-      renderHistory();
-    }
-  });
+    <script>
+        function showFileName() {
+            const fileInput = document.getElementById('imageFile');
+            const fileLabel = document.getElementById('fileLabel');
+            if (fileInput.files.length > 0) {
+                fileLabel.innerText = "Terpilih: " + fileInput.files[0].name;
+            }
+        }
 
-  function showError(msg){
-    errorMsg.textContent = msg;
-    errorMsg.classList.add('show');
-  }
-  function hideError(){ errorMsg.classList.remove('show'); }
+        async function uploadImage() {
+            const fileInput = document.getElementById('imageFile');
+            const resultDiv = document.getElementById('result');
 
-  function setFile(file){
-    if(!file || !file.type.startsWith('image/')){
-      showError('Berkas harus berupa gambar (jpg, png, webp, dsb).');
-      return;
-    }
-    hideError();
-    currentFile = file;
-    receipt.classList.remove('show');
-    const reader = new FileReader();
-    reader.onload = e => { previewImg.src = e.target.result; };
-    reader.readAsDataURL(file);
-    fname.textContent = file.name;
-    fsize.textContent = humanSize(file.size);
-    previewCard.classList.add('show');
-  }
+            if (fileInput.files.length === 0) {
+                alert("Silakan pilih foto terlebih dahulu!");
+                return;
+            }
 
-  dropzone.addEventListener('click', () => fileInput.click());
-  fileInput.addEventListener('change', () => setFile(fileInput.files[0]));
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append("image", file);
 
-  ['dragenter','dragover'].forEach(evt => {
-    dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('drag'); });
-  });
-  ['dragleave','drop'].forEach(evt => {
-    dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('drag'); });
-  });
-  dropzone.addEventListener('drop', e => {
-    const file = e.dataTransfer.files[0];
-    setFile(file);
-  });
+            resultDiv.innerHTML = `<p class="loading">Sedang mengunggah foto, mohon tunggu...</p>`;
 
-  window.addEventListener('paste', e => {
-    const items = e.clipboardData && e.clipboardData.items;
-    if(!items) return;
-    for(const it of items){
-      if(it.type.startsWith('image/')){
-        setFile(it.getAsFile());
-        break;
-      }
-    }
-  });
+            try {
+                // Menggunakan sistem API Imgur dengan Client ID siap pakai
+                const response = await fetch("https://api.imgur.com/3/image", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Client-ID c481d7f022797e8" 
+                    },
+                    body: formData
+                });
 
-  sendBtn.addEventListener('click', async () => {
-    if(!currentFile) return;
-    hideError();
-    sendBtn.disabled = true;
-    progressLine.classList.add('show');
-    receipt.classList.remove('show');
+                const data = await response.json();
 
-    try{
-      const form = new FormData();
-      form.append('reqtype', 'fileupload');
-      form.append('fileToUpload', currentFile);
+                if (data.success) {
+                    const imageUrl = data.data.link;
+                    resultDiv.innerHTML = `
+                        <div class="success-box">
+                            <p><strong>Berhasil! Link Gambar Anda:</strong></p>
+                            <a href="${imageUrl}" target="_blank">${imageUrl}</a>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">Gagal mengunggah gambar. Silakan coba lagi.</p>`;
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                resultDiv.innerHTML = `<p style="color: red;">Terjadi kesalahan koneksi jaringan.</p>`;
+            }
+        }
+    </script>
 
-      const res = await fetch('https://catbox.moe/user/api.php', {
-        method: 'POST',
-        body: form
-      });
-
-      if(!res.ok) throw new Error('Server hosting menolak berkas (status ' + res.status + ').');
-      const url = (await res.text()).trim();
-      if(!url.startsWith('http')) throw new Error('Respons tidak dikenali dari server hosting.');
-
-      const track = makeTrackCode(url);
-      const now = new Date();
-      const thumb = await resizeThumb(currentFile, 160);
-
-      trackCode.textContent = track;
-      rName.textContent = currentFile.name;
-      rDate.textContent = formatDate(now);
-      rLink.textContent = url;
-      rLink.href = url;
-      receipt.classList.add('show');
-
-      const list = loadHistory();
-      list.push({
-        id: Date.now().toString(36),
-        url, track,
-        name: currentFile.name,
-        date: formatDate(now),
-        thumb
-      });
-      saveHistory(list);
-      renderHistory();
-
-    }catch(err){
-      showError('Gagal mengirim gambar: ' + err.message + ' — cek koneksi internet lalu coba lagi.');
-    }finally{
-      sendBtn.disabled = false;
-      progressLine.classList.remove('show');
-    }
-  });
-
-  copyBtn.addEventListener('click', () => {
-    navigator.clipboard.writeText(rLink.href).then(() => {
-      copyBtn.textContent = 'Tersalin'; setTimeout(() => copyBtn.textContent = 'Salin', 1200);
-    });
-  });
-
-  downloadBtn.addEventListener('click', () => {
-    if(!currentFile) return;
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(currentFile);
-    a.download = currentFile.name || 'gambar.jpg';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  });
-
-  renderHistory();
-
-  // ---- Ambil Cuplikan Layar (screen snipping) ----
-  const snipBtn = document.getElementById('snipBtn');
-  const snipOverlay = document.getElementById('snipOverlay');
-  const snipStage = document.getElementById('snipStage');
-  const snipImg = document.getElementById('snipImg');
-  const snipRect = document.getElementById('snipRect');
-  const snipDims = document.getElementById('snipDims');
-  const snipUse = document.getElementById('snipUse');
-  const snipAll = document.getElementById('snipAll');
-  const snipCancel = document.getElementById('snipCancel');
-
-  let sourceCanvas = null; // full-res captured frame
-  let sel = null; // {x,y,w,h} in displayed(img) pixels
-  let dragStart = null;
-
-  const supportsCapture = !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia);
-  if(!supportsCapture){
-    snipBtn.disabled = true;
-    snipBtn.title = 'Fitur ini butuh browser modern dengan koneksi aman (https atau localhost).';
-  }
-
-  snipBtn.addEventListener('click', async () => {
-    hideError();
-    try{
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { cursor: 'never' },
-        audio: false
-      });
-      const track = stream.getVideoTracks()[0];
-      const video = document.createElement('video');
-      video.srcObject = stream;
-      await video.play();
-      await new Promise(r => requestAnimationFrame(r));
-      await new Promise(r => requestAnimationFrame(r)); // extra frame to ensure it's painted
-
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0);
-      track.stop();
-      stream.getTracks().forEach(t => t.stop());
-
-      sourceCanvas = canvas;
-      openSnipModal();
-    }catch(err){
-      if(err.name !== 'NotAllowedError'){
-        showError('Tidak bisa mengambil cuplikan layar: ' + err.message);
-      }
-    }
-  });
-
-  function openSnipModal(){
-    sel = null;
-    snipRect.style.display = 'none';
-    snipUse.disabled = true;
-    snipImg.src = sourceCanvas.toDataURL('image/png');
-    snipOverlay.classList.add('show');
-  }
-
-  function closeSnipModal(){
-    snipOverlay.classList.remove('show');
-    sourceCanvas = null;
-  }
-
-  snipCancel.addEventListener('click', closeSnipModal);
-
-  snipAll.addEventListener('click', () => {
-    canvasToFileAndUse(sourceCanvas, 0, 0, sourceCanvas.width, sourceCanvas.height);
-  });
-
-  snipUse.addEventListener('click', () => {
-    if(!sel || sel.w < 4 || sel.h < 4) return;
-    const scale = sourceCanvas.width / snipImg.clientWidth;
-    canvasToFileAndUse(
-      sourceCanvas,
-      Math.round(sel.x * scale),
-      Math.round(sel.y * scale),
-      Math.round(sel.w * scale),
-      Math.round(sel.h * scale)
-    );
-  });
-
-  function canvasToFileAndUse(srcCanvas, sx, sy, sw, sh){
-    const out = document.createElement('canvas');
-    out.width = sw; out.height = sh;
-    out.getContext('2d').drawImage(srcCanvas, sx, sy, sw, sh, 0, 0, sw, sh);
-    out.toBlob((blob) => {
-      if(!blob) return;
-      const stamp = new Date().toISOString().replace(/[:.]/g,'-');
-      const file = new File([blob], 'cuplikan-' + stamp + '.png', { type: 'image/png' });
-      closeSnipModal();
-      setFile(file);
-    }, 'image/png');
-  }
-
-  function getStagePos(e){
-    const rect = snipImg.getBoundingClientRect();
-    const x = Math.min(Math.max(e.clientX - rect.left, 0), rect.width);
-    const y = Math.min(Math.max(e.clientY - rect.top, 0), rect.height);
-    return { x, y };
-  }
-
-  snipImg.addEventListener('pointerdown', (e) => {
-    dragStart = getStagePos(e);
-    sel = { x: dragStart.x, y: dragStart.y, w: 0, h: 0 };
-    snipRect.style.display = 'block';
-    snipDims.style.display = 'block';
-    snipImg.setPointerCapture(e.pointerId);
-  });
-
-  snipImg.addEventListener('pointermove', (e) => {
-    if(!dragStart) return;
-    const p = getStagePos(e);
-    const x = Math.min(dragStart.x, p.x);
-    const y = Math.min(dragStart.y, p.y);
-    const w = Math.abs(p.x - dragStart.x);
-    const h = Math.abs(p.y - dragStart.y);
-    sel = { x, y, w, h };
-    snipRect.style.left = x + 'px';
-    snipRect.style.top = y + 'px';
-    snipRect.style.width = w + 'px';
-    snipRect.style.height = h + 'px';
-    const scale = sourceCanvas.width / snipImg.clientWidth;
-    snipDims.textContent = Math.round(w*scale) + ' × ' + Math.round(h*scale) + ' px';
-    snipUse.disabled = (w < 4 || h < 4);
-  });
-
-  snipImg.addEventListener('pointerup', (e) => {
-    dragStart = null;
-    try{ snipImg.releasePointerCapture(e.pointerId); }catch(_){}
-  });
-
-})();
-</script>
 </body>
 </html>
