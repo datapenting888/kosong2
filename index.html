@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Photo to URL Sendiri</title>
+    <title>Photo to URL Sederhana</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,10 +22,7 @@
             text-align: center;
             width: 400px;
         }
-        h2 {
-            color: #333;
-            margin-bottom: 20px;
-        }
+        h2 { color: #333; margin-bottom: 20px; }
         .upload-box {
             border: 2px dashed #00b894;
             padding: 20px;
@@ -34,9 +31,7 @@
             cursor: pointer;
             margin-bottom: 20px;
         }
-        input[type="file"] {
-            display: none;
-        }
+        input[type="file"] { display: none; }
         .file-label {
             display: block;
             color: #00b894;
@@ -52,34 +47,9 @@
             font-size: 16px;
             cursor: pointer;
             width: 100%;
-            transition: background 0.3s;
         }
-        button:hover {
-            background-color: #019875;
-        }
-        #result {
-            margin-top: 20px;
-            word-break: break-all;
-            text-align: left;
-        }
-        .loading {
-            color: #e17055;
-            font-weight: bold;
-        }
-        .success-box {
-            background: #e8f8f5;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #00b894;
-        }
-        .success-box a {
-            color: #0984e3;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .success-box a:hover {
-            text-decoration: underline;
-        }
+        button:hover { background-color: #019875; }
+        #result { margin-top: 20px; word-break: break-all; text-align: left; }
     </style>
 </head>
 <body>
@@ -87,12 +57,14 @@
     <div class="container">
         <h2>Photo to URL Converter</h2>
         
-        <div class="upload-box" onclick="document.getElementById('imageFile').click()">
-            <span class="file-label" id="fileLabel">📂 Pilih atau Klik untuk Unggah Foto</span>
-            <input type="file" id="imageFile" accept="image/*" onchange="showFileName()">
-        </div>
-
-        <button onclick="uploadImage()">Ubah Menjadi Link</button>
+        <!-- Menggunakan layanan Catbox.moe API publik yang ramah untuk script sederhana -->
+        <form id="uploadForm" onsubmit="uploadImage(event)">
+            <div class="upload-box" onclick="document.getElementById('imageFile').click()">
+                <span class="file-label" id="fileLabel">📂 Pilih Foto</span>
+                <input type="file" id="imageFile" name="fileToUpload" accept="image/*" required onchange="showFileName()">
+            </div>
+            <button type="submit" id="submitBtn">Ubah Menjadi Link</button>
+        </form>
         
         <div id="result"></div>
     </div>
@@ -106,47 +78,45 @@
             }
         }
 
-        async function uploadImage() {
+        async function uploadImage(event) {
+            event.preventDefault();
             const fileInput = document.getElementById('imageFile');
             const resultDiv = document.getElementById('result');
+            const submitBtn = document.getElementById('submitBtn');
 
-            if (fileInput.files.length === 0) {
-                alert("Silakan pilih foto terlebih dahulu!");
-                return;
-            }
+            if (fileInput.files.length === 0) return;
 
-            const file = fileInput.files[0];
             const formData = new FormData();
-            formData.append("image", file);
+            formData.append("reqtype", "fileupload");
+            formData.append("fileToUpload", fileInput.files[0]);
 
-            resultDiv.innerHTML = `<p class="loading">Sedang mengunggah foto, mohon tunggu...</p>`;
+            resultDiv.innerHTML = `<p style="color: #e17055; font-weight: bold;">Sedang mengunggah...</p>`;
+            submitBtn.disabled = true;
 
             try {
-                // Menggunakan sistem API Imgur dengan Client ID siap pakai
-                const response = await fetch("https://api.imgur.com/3/image", {
+                // Menggunakan endpoint publik Catbox yang mendukung akses lintas-domain (CORS)
+                const response = await fetch("https://catbox.moe/api.php", {
                     method: "POST",
-                    headers: {
-                        "Authorization": "Client-ID c481d7f022797e8" 
-                    },
                     body: formData
                 });
 
-                const data = await response.json();
+                const link = await response.text();
 
-                if (data.success) {
-                    const imageUrl = data.data.link;
+                if (link.startsWith("http")) {
                     resultDiv.innerHTML = `
-                        <div class="success-box">
+                        <div style="background: #e8f8f5; padding: 10px; border-radius: 6px; border: 1px solid #00b894;">
                             <p><strong>Berhasil! Link Gambar Anda:</strong></p>
-                            <a href="${imageUrl}" target="_blank">${imageUrl}</a>
+                            <a href="${link}" target="_blank">${link}</a>
                         </div>
                     `;
                 } else {
-                    resultDiv.innerHTML = `<p style="color: red;">Gagal mengunggah gambar. Silakan coba lagi.</p>`;
+                    resultDiv.innerHTML = `<p style="color: red;">Gagal mengunggah. Coba lagi.</p>`;
                 }
             } catch (error) {
-                console.error("Error:", error);
-                resultDiv.innerHTML = `<p style="color: red;">Terjadi kesalahan koneksi jaringan.</p>`;
+                console.error(error);
+                resultDiv.innerHTML = `<p style="color: red;">Terjadi kesalahan sistem.</p>`;
+            } finally {
+                submitBtn.disabled = false;
             }
         }
     </script>
