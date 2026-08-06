@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Transaksi & Rekening (Auto-Row & Paste Image)</title>
+    <title>Data Transaksi & Rekening</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,7 +13,7 @@
             color: #333;
         }
         .container {
-            max-width: 1050px;
+            max-width: 950px;
             margin: 0 auto;
             background: #fff;
             padding: 25px;
@@ -41,26 +41,6 @@
             border-radius: 4px;
             border-left: 4px solid #3182ce;
         }
-        button {
-            background-color: #3182ce;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-            transition: background 0.2s;
-        }
-        button:hover {
-            background-color: #2b6cb0;
-        }
-        button.btn-success {
-            background-color: #38a169;
-        }
-        button.btn-success:hover {
-            background-color: #2f855a;
-        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -68,7 +48,7 @@
             background: #fff;
         }
         th {
-            background-color: #dd6b20; /* Warna jingga mirip spreadsheet */
+            background-color: #dd6b20;
             color: white;
             text-align: center;
             padding: 12px 8px;
@@ -80,12 +60,12 @@
             padding: 8px;
             text-align: center;
             vertical-align: middle;
-            background-color: #ebf8ff; /* Warna latar belakang biru muda mirip spreadsheet */
+            background-color: #ebf8ff;
         }
         tr:nth-child(even) td {
             background-color: #e2e8f0;
         }
-        input[type="date"], input[type="text"], select {
+        input[type="text"], select {
             width: 90%;
             padding: 6px;
             border: 1px solid #a0aec0;
@@ -94,14 +74,10 @@
             font-size: 13px;
             background: #fff;
         }
-        input[type="file"] {
-            font-size: 11px;
-            max-width: 160px;
-        }
         .paste-area {
             border: 2px dashed #cbd5e0;
             background: #f7fafc;
-            padding: 8px;
+            padding: 10px;
             border-radius: 4px;
             min-height: 45px;
             display: flex;
@@ -123,22 +99,6 @@
             border-radius: 3px;
             border: 1px solid #cbd5e0;
         }
-        .actions-col {
-            width: 80px;
-        }
-        .btn-delete {
-            background-color: #e53e3e;
-            color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        .btn-delete:hover {
-            background-color: #c53030;
-        }
-        /* Modal untuk preview gambar besar */
         .modal {
             display: none;
             position: fixed;
@@ -174,44 +134,72 @@
 <div class="container">
     <h2>Form Data Rekening & Screenshot Bukti Transaksi</h2>
     <div class="controls">
-        <button onclick="addRow()">+ Tambah Baris</button>
-        <div class="info-text">💡 <b>Tips:</b> Klik pada area kotak screenshot, lalu tekan <b>Ctrl + V</b> untuk paste gambar langsung, atau pilih file dari komputer. Baris baru akan otomatis bertambah!</div>
+        <div class="info-text">💡 <b>Tips:</b> Ketik nomor rekening, pilih jenis bank, lalu klik kotak screenshot dan tekan <b>Ctrl + V</b>. Baris baru akan otomatis tersimpan & bertambah!</div>
     </div>
 
     <table id="transTable">
         <thead>
             <tr>
-                <th style="width: 18%;">TANGGAL</th>
-                <th style="width: 25%;">NOMOR REKENING</th>
-                <th style="width: 22%;">JENIS</th>
+                <th style="width: 20%;">TANGGAL</th>
+                <th style="width: 30%;">NOMOR REKENING</th>
+                <th style="width: 25%;">JENIS</th>
                 <th style="width: 25%;">SCREENSHOT</th>
-                <th class="actions-col">AKSI</th>
             </tr>
         </thead>
         <tbody id="tableBody">
-            <!-- Baris data contoh 1 -->
             <tr>
-                <td><input type="date" class="row-date" value="2026-08-03"></td>
+                <td><input type="text" class="row-date" value="03/08/2026"></td>
                 <td><input type="text" class="row-rek" value="901181440594" placeholder="No Rekening"></td>
                 <td>
                     <select class="row-jenis">
-                        <option value="SEABANK" selected>SEABANK</option>
-                        <option value="GOPAY">GOPAY</option>
-                        <option value="BCA">BCA</option>
                         <option value="DANA">DANA</option>
                         <option value="OVO">OVO</option>
+                        <option value="GOPAY">GOPAY</option>
+                        <option value="LINKAJA">LINKAJA</option>
+                        <option value="BCA">BCA</option>
                         <option value="BRI">BRI</option>
-                        <option value="MANDIRI">MANDIRI</option>
                         <option value="BNI">BNI</option>
+                        <option value="MANDIRI">MANDIRI</option>
+                        <option value="JAGO">JAGO</option>
+                        <option value="MAYBANK">MAYBANK</option>
+                        <option value="BSI">BSI</option>
+                        <option value="CIMB">CIMB</option>
+                        <option value="DANAMON">DANAMON</option>
+                        <option value="SEABANK" selected>SEABANK</option>
                     </select>
                 </td>
                 <td>
                     <div class="paste-area" tabindex="0" onpaste="handlePaste(event, this)" title="Klik lalu tekan Ctrl+V untuk paste gambar">
-                        <span style="font-size:11px; color:#718096;">Paste (Ctrl+V) / Upload</span>
-                        <input type="file" accept="image/*" onchange="handleFileSelect(this)" style="margin-top:2px;">
+                        <span style="font-size:11px; color:#718096;">Klik & Paste (Ctrl+V)</span>
                     </div>
                 </td>
-                <td><button class="btn-delete" onclick="deleteRow(this)">Hapus</button></td>
+            </tr>
+            <tr>
+                <td><input type="text" class="row-date" value="04/08/2026"></td>
+                <td><input type="text" class="row-rek" value="87825751929" placeholder="No Rekening"></td>
+                <td>
+                    <select class="row-jenis">
+                        <option value="DANA">DANA</option>
+                        <option value="OVO">OVO</option>
+                        <option value="GOPAY" selected>GOPAY</option>
+                        <option value="LINKAJA">LINKAJA</option>
+                        <option value="BCA">BCA</option>
+                        <option value="BRI">BRI</option>
+                        <option value="BNI">BNI</option>
+                        <option value="MANDIRI">MANDIRI</option>
+                        <option value="JAGO">JAGO</option>
+                        <option value="MAYBANK">MAYBANK</option>
+                        <option value="BSI">BSI</option>
+                        <option value="CIMB">CIMB</option>
+                        <option value="DANAMON">DANAMON</option>
+                        <option value="SEABANK">SEABANK</option>
+                    </select>
+                </td>
+                <td>
+                    <div class="paste-area" tabindex="0" onpaste="handlePaste(event, this)" title="Klik lalu tekan Ctrl+V untuk paste gambar">
+                        <span style="font-size:11px; color:#718096;">Klik & Paste (Ctrl+V)</span>
+                    </div>
+                </td>
             </tr>
         </tbody>
     </table>
@@ -224,71 +212,43 @@
 </div>
 
 <script>
-    function getTodayDate() {
+    const bankList = ["DANA", "OVO", "GOPAY", "LINKAJA", "BCA", "BRI", "BNI", "MANDIRI", "JAGO", "MAYBANK", "BSI", "CIMB", "DANAMON", "SEABANK"];
+
+    function getFormattedDate() {
         const today = new Date();
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
         const yyyy = today.getFullYear();
-        let mm = today.getMonth() + 1;
-        let dd = today.getDate();
-        if (mm < 10) mm = '0' + mm;
-        if (dd < 10) dd = '0' + dd;
-        return `${yyyy}-${mm}-${dd}`;
+        return `${dd}/${mm}/${yyyy}`;
     }
 
     function addRow() {
         const tbody = document.getElementById('tableBody');
         const newRow = document.createElement('tr');
         
+        let optionsHtml = '';
+        bankList.forEach(bank => {
+            optionsHtml += `<option value="${bank}">${bank}</option>`;
+        });
+
         newRow.innerHTML = `
-            <td><input type="date" class="row-date" value="${getTodayDate()}"></td>
+            <td><input type="text" class="row-date" value="${getFormattedDate()}"></td>
             <td><input type="text" class="row-rek" placeholder="No Rekening"></td>
             <td>
                 <select class="row-jenis">
-                    <option value="SEABANK">SEABANK</option>
-                    <option value="GOPAY">GOPAY</option>
-                    <option value="BCA">BCA</option>
-                    <option value="DANA">DANA</option>
-                    <option value="OVO">OVO</option>
-                    <option value="BRI">BRI</option>
-                    <option value="MANDIRI">MANDIRI</option>
-                    <option value="BNI">BNI</option>
+                    ${optionsHtml}
                 </select>
             </td>
             <td>
                 <div class="paste-area" tabindex="0" onpaste="handlePaste(event, this)" title="Klik lalu tekan Ctrl+V untuk paste gambar">
-                    <span style="font-size:11px; color:#718096;">Paste (Ctrl+V) / Upload</span>
-                    <input type="file" accept="image/*" onchange="handleFileSelect(this)" style="margin-top:2px;">
+                    <span style="font-size:11px; color:#718096;">Klik & Paste (Ctrl+V)</span>
                 </div>
             </td>
-            <td><button class="btn-delete" onclick="deleteRow(this)">Hapus</button></td>
         `;
         tbody.appendChild(newRow);
         return newRow;
     }
 
-    function deleteRow(btn) {
-        const row = btn.closest('tr');
-        // Jangan hapus jika itu satu-satunya baris tersisa
-        const tbody = document.getElementById('tableBody');
-        if (tbody.children.length > 1) {
-            row.remove();
-        } else {
-            alert("Minimal harus ada satu baris tersisa.");
-        }
-    }
-
-    // Handle File Upload dari storage
-    function handleFileSelect(input) {
-        if (input.files && input.files[0]) {
-            const file = input.files[0];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                processImageInput(input.closest('.paste-area'), e.target.result);
-            }
-            reader.readAsDataURL(file);
-        }
-    }
-
-    // Handle Paste Gambar langsung (Ctrl+V)
     function handlePaste(event, pasteArea) {
         const items = (event.clipboardData || event.originalEvent.clipboardData).items;
         for (let i = 0; i < items.length; i++) {
@@ -299,23 +259,20 @@
                     processImageInput(pasteArea, e.target.result);
                 };
                 reader.readAsDataURL(blob);
-                event.preventDefault(); // Mencegah paste teks default
+                event.preventDefault();
                 break;
             }
         }
     }
 
-    // Memproses gambar yang dimasukkan, menampilkan preview, set tanggal otomatis, & auto tambah baris baru
     function processImageInput(pasteArea, dataUrl) {
         const row = pasteArea.closest('tr');
         
-        // 1. Set tanggal otomatis ke hari ini jika tanggal kosong
         const dateInput = row.querySelector('.row-date');
         if (!dateInput.value) {
-            dateInput.value = getTodayDate();
+            dateInput.value = getFormattedDate();
         }
 
-        // 2. Tampilkan thumbnail gambar di dalam kotak
         pasteArea.innerHTML = '';
         
         const img = document.createElement('img');
@@ -327,13 +284,11 @@
         };
         pasteArea.appendChild(img);
 
-        // Tambah tombol ganti kecil di bawah thumbnail
         const changeContainer = document.createElement('div');
         changeContainer.style.marginTop = '4px';
-        changeContainer.innerHTML = `<button style="font-size:9px; padding:2px 6px; background:#4a5568;" onclick="resetPasteArea(this)">Ganti</button>`;
+        changeContainer.innerHTML = `<button style="font-size:9px; padding:2px 6px; background:#4a5568; color:white; border:none; border-radius:3px; cursor:pointer;" onclick="resetPasteArea(this)">Ganti</button>`;
         pasteArea.appendChild(changeContainer);
 
-        // 3. Cek apakah ini baris terakhir. Jika ya, otomatis buat baris baru di bawahnya.
         const tbody = document.getElementById('tableBody');
         const rows = Array.from(tbody.children);
         if (rows[rows.length - 1] === row) {
@@ -341,12 +296,10 @@
         }
     }
 
-    // Reset area jika ingin mengganti gambar
     function resetPasteArea(btn) {
         const pasteArea = btn.closest('.paste-area');
         pasteArea.innerHTML = `
-            <span style="font-size:11px; color:#718096;">Paste (Ctrl+V) / Upload</span>
-            <input type="file" accept="image/*" onchange="handleFileSelect(this)" style="margin-top:2px;">
+            <span style="font-size:11px; color:#718096;">Klik & Paste (Ctrl+V)</span>
         `;
     }
 
