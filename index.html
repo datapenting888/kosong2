@@ -133,27 +133,18 @@
             border-color: #d4af37;
             box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
         }
-        .calendar-setting {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: #212433;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 13px;
-            color: #e5e7eb;
-            white-space: nowrap;
-            border: 1px solid #374151;
-            position: relative;
-            z-index: 5;
+        .date-search-wrapper {
+            margin-left: 4px;
         }
-        .calendar-setting input[type="date"] {
-            padding: 4px;
-            border: 1px solid #4b5563;
-            border-radius: 4px;
-            font-size: 12px;
-            background: #181a26;
-            color: #fff;
+        .date-search-box {
+            padding: 8px 12px;
+            width: 145px;
+            text-align: center;
+            cursor: pointer;
+            color-scheme: dark;
+        }
+        .date-search-box::-webkit-calendar-picker-indicator {
+            filter: invert(0.6) sepia(1) saturate(4) hue-rotate(5deg);
             cursor: pointer;
         }
         table {
@@ -200,6 +191,15 @@
             border-color: #4b5563;
             font-weight: bold;
         }
+        .row-date {
+            cursor: default;
+        }
+        .row-date:read-only {
+            background-color: #181a26;
+            color: #d4af37;
+            font-weight: bold;
+            border-color: #4b5563;
+        }
         .paste-area {
             border: 2px dashed #4b5563;
             background: #181a26;
@@ -224,6 +224,82 @@
             cursor: pointer;
             border-radius: 3px;
             border: 1px solid #4b5563;
+        }
+        .link-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .link-placeholder {
+            color: #4b5563;
+            font-size: 13px;
+        }
+        .row-link {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #4b5563;
+            border-radius: 4px;
+            font-size: 12px;
+            background: #181a26;
+            color: #2dd4bf;
+            outline: none;
+            text-align: left;
+        }
+        .row-link::placeholder {
+            color: #6b7280;
+            font-style: italic;
+        }
+        .row-link:focus {
+            border-color: #d4af37;
+            background: #212433;
+        }
+        .row-link.locked {
+            color: #2dd4bf;
+            font-weight: bold;
+            cursor: default;
+            background-color: #181a26;
+        }
+        .open-link-btn {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid #4b5563;
+            background: #212433;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+            transition: all 0.2s;
+        }
+        .open-link-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: #d4af37;
+        }
+        .open-link-btn:hover {
+            background: #d4af37;
+            border-color: #d4af37;
+        }
+        .open-link-btn:hover svg {
+            fill: #0f1016;
+        }
+        .copy-open-btn {
+            width: 32px;
+            height: 32px;
+            border-color: #2dd4bf;
+        }
+        .copy-open-btn svg {
+            fill: #2dd4bf;
+        }
+        .copy-open-btn:hover {
+            background: #2dd4bf;
+            border-color: #2dd4bf;
+        }
+        .copy-open-btn:hover svg {
+            fill: #0f1016;
         }
         .modal {
             display: none;
@@ -282,20 +358,20 @@
                 <input type="text" id="searchInput" class="search-box" placeholder="Cari" onkeyup="filterTable()">
             </div>
         </div>
-        
-        <div class="calendar-setting">
-            <span>📅 Tanggal:</span>
-            <input type="date" id="globalDateSetting" onchange="updateDefaultDate(this)" title="Pilih tanggal untuk baris berikutnya">
+
+        <div class="search-wrapper date-search-wrapper">
+            <input type="date" id="searchDate" class="search-box date-search-box" onchange="filterTable()" onclick="if(this.showPicker) this.showPicker()" title="Klik untuk pilih tanggal yang ingin dicari">
         </div>
     </div>
 
     <table id="transTable">
         <thead>
             <tr>
-                <th style="width: 20%;">TANGGAL</th>
-                <th style="width: 30%;">NOMOR REKENING</th>
-                <th style="width: 25%;">JENIS</th>
-                <th style="width: 25%;">SCREENSHOT</th>
+                <th style="width: 14%;">TANGGAL</th>
+                <th style="width: 22%;">NOMOR REKENING</th>
+                <th style="width: 16%;">JENIS</th>
+                <th style="width: 20%;">SCREENSHOT</th>
+                <th style="width: 28%;">TAUTAN</th>
             </tr>
         </thead>
         <tbody id="tableBody">
@@ -310,18 +386,16 @@
 
 <script>
     const bankList = ["DANA", "OVO", "GOPAY", "LINKAJA", "BCA", "BRI", "BNI", "MANDIRI", "JAGO", "MAYBANK", "BSI", "CIMB", "DANAMON", "SEABANK"];
-    let customSelectedDate = "";
 
     window.addEventListener('DOMContentLoaded', () => {
+        loadAndCleanData();
+
         const today = new Date();
         const yyyy = today.getFullYear();
-        let mm = today.getMonth() + 1;
-        let dd = today.getDate();
-        if (mm < 10) mm = '0' + mm;
-        if (dd < 10) dd = '0' + dd;
-        document.getElementById('globalDateSetting').value = `${yyyy}-${mm}-${dd}`;
-
-        loadAndCleanData();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        document.getElementById('searchDate').value = `${yyyy}-${mm}-${dd}`;
+        filterTable();
     });
 
     function toggleInfo(event) {
@@ -342,17 +416,7 @@
         }
     }
 
-    function updateDefaultDate(input) {
-        if (input.value) {
-            const parts = input.value.split('-');
-            customSelectedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
-    }
-
     function getFormattedDate() {
-        if (customSelectedDate) {
-            return customSelectedDate;
-        }
         const today = new Date();
         const dd = String(today.getDate()).padStart(2, '0');
         const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -377,13 +441,23 @@
     function filterTable() {
         const input = document.getElementById('searchInput');
         const filter = input.value.toUpperCase();
+
+        const dateInput = document.getElementById('searchDate');
+        const dateRaw = dateInput.value; // format: yyyy-mm-dd
+        let dateFilter = "";
+        if (dateRaw) {
+            const parts = dateRaw.split('-');
+            dateFilter = `${parts[2]}/${parts[1]}/${parts[0]}`; // ubah ke dd/mm/yyyy
+        }
+
         const tbody = document.getElementById('tableBody');
         const rows = tbody.getElementsByTagName('tr');
 
         for (let i = 0; i < rows.length; i++) {
             const rekInput = rows[i].querySelector('.row-rek');
             const jenisSelect = rows[i].querySelector('.row-jenis');
-            
+            const dateEl = rows[i].querySelector('.row-date');
+
             const isLastActiveRow = !rows[i].querySelector('.row-rek').disabled;
             if (isLastActiveRow) {
                 rows[i].style.display = "";
@@ -393,14 +467,24 @@
             if (rekInput && jenisSelect) {
                 const rekValue = rekInput.value || "";
                 const jenisValue = jenisSelect.value || "";
-                
-                if (rekValue.toUpperCase().indexOf(filter) > -1 || jenisValue.toUpperCase().indexOf(filter) > -1) {
+                const rowDateValue = dateEl ? dateEl.value : "";
+
+                const matchesText = rekValue.toUpperCase().indexOf(filter) > -1 || jenisValue.toUpperCase().indexOf(filter) > -1;
+                const matchesDate = !dateFilter || rowDateValue === dateFilter;
+
+                if (matchesText && matchesDate) {
                     rows[i].style.display = "";
                 } else {
                     rows[i].style.display = "none";
                 }
             }
         }
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str || "";
+        return div.innerHTML;
     }
 
     function loadAndCleanData() {
@@ -418,12 +502,12 @@
         localStorage.setItem('transaksiRekeningData', JSON.stringify(savedData));
 
         if (savedData.length === 0) {
-            addRow(getFormattedDate(), "NO REKENING", "-", "", false, null);
+            addRow(getFormattedDate(), "NO REKENING", "-", "", false, null, "");
         } else {
             savedData.forEach(item => {
-                addRow(item.date, item.rek, item.jenis, item.imgUrl, item.isLocked, item.timestamp);
+                addRow(item.date, item.rek, item.jenis, item.imgUrl, item.isLocked, item.timestamp, item.link || "");
             });
-            addRow(getFormattedDate(), "NO REKENING", "-", "", false, null);
+            addRow(getFormattedDate(), "NO REKENING", "-", "", false, null, "");
         }
     }
 
@@ -438,6 +522,8 @@
             const imgContainer = row.querySelector('.paste-area');
             const imgElem = imgContainer.querySelector('.preview-img');
             const isLocked = row.querySelector('.row-rek').disabled;
+            const linkInput = row.querySelector('.row-link');
+            const link = linkInput ? linkInput.value : "";
 
             if (isLocked && imgElem) {
                 dataToSave.push({
@@ -445,6 +531,7 @@
                     rek: rek,
                     jenis: jenis,
                     imgUrl: imgElem.src,
+                    link: link,
                     isLocked: true,
                     timestamp: parseInt(row.dataset.timestamp) || new Date().getTime()
                 });
@@ -454,7 +541,34 @@
         localStorage.setItem('transaksiRekeningData', JSON.stringify(dataToSave));
     }
 
-    function addRow(dateVal = null, rekVal = "NO REKENING", jenisVal = "-", imgDataUrl = "", isLocked = false, timestamp = null) {
+    const openLinkIconSvg = `<svg viewBox="0 0 24 24"><path d="M14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7zM5 5h5V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-5h-2v5H5V5z"/></svg>`;
+
+    function buildLinkCellHtml(isLocked, linkVal) {
+        if (!isLocked) {
+            return `<span class="link-placeholder">-</span>`;
+        }
+        if (linkVal) {
+            return `
+                <input type="text" class="row-link locked" value="${escapeHtml(linkVal)}" readonly title="Tautan tersimpan (tidak dapat diubah)">
+                <button type="button" class="open-link-btn" onclick="openSavedLink(this)" title="Buka tautan">
+                    ${openLinkIconSvg}
+                </button>`;
+        }
+        return `
+            <button type="button" class="open-link-btn copy-open-btn" onclick="handleCopyAndOpen(this)" title="Salin screenshot & buka phototourl.com">
+                ${openLinkIconSvg}
+            </button>`;
+    }
+
+    function buildEditableLinkInputHtml() {
+        return `
+            <input type="text" class="row-link" placeholder="Tempel tautan di sini" oninput="saveToLocalStorage()" onblur="lockLinkInput(this)" onkeydown="if(event.key==='Enter'){this.blur();}" title="Tempel tautan hasil unggah dari phototourl.com">
+            <button type="button" class="open-link-btn" onclick="openSavedLink(this)" title="Buka tautan">
+                ${openLinkIconSvg}
+            </button>`;
+    }
+
+    function addRow(dateVal = null, rekVal = "NO REKENING", jenisVal = "-", imgDataUrl = "", isLocked = false, timestamp = null, linkVal = "") {
         const tbody = document.getElementById('tableBody');
         const newRow = document.createElement('tr');
         if (timestamp) {
@@ -471,7 +585,7 @@
         const dateStr = dateVal !== null ? dateVal : getFormattedDate();
 
         newRow.innerHTML = `
-            <td><input type="text" class="row-date" value="${dateStr}" ${isLocked ? 'disabled' : ''}></td>
+            <td><input type="text" class="row-date" value="${dateStr}" ${isLocked ? 'disabled' : 'readonly'}></td>
             <td><input type="text" class="row-rek${isSamar}" value="${rekVal}" onfocus="clearPlaceholder(this)" onblur="restorePlaceholder(this)" ${isLocked ? 'disabled' : ''}></td>
             <td>
                 <select class="row-jenis" ${isLocked ? 'disabled' : ''}>
@@ -487,9 +601,68 @@
                     }
                 </div>
             </td>
+            <td>
+                <div class="link-cell">
+                    ${buildLinkCellHtml(isLocked, linkVal)}
+                </div>
+            </td>
         `;
         tbody.appendChild(newRow);
         return newRow;
+    }
+
+    async function handleCopyAndOpen(btn) {
+        const row = btn.closest('tr');
+        const imgElem = row.querySelector('.preview-img');
+        if (!imgElem) {
+            alert("Belum ada screenshot pada baris ini. Silakan tempel gambar terlebih dahulu.");
+            return;
+        }
+
+        try {
+            const response = await fetch(imgElem.src);
+            const blob = await response.blob();
+            if (navigator.clipboard && window.ClipboardItem) {
+                await navigator.clipboard.write([
+                    new ClipboardItem({ [blob.type]: blob })
+                ]);
+            }
+        } catch (err) {
+            console.warn("Gagal menyalin gambar ke clipboard:", err);
+        }
+
+        window.open('https://phototourl.com/id', '_blank', 'noopener');
+
+        const linkCell = row.querySelector('.link-cell');
+        linkCell.innerHTML = buildEditableLinkInputHtml();
+        saveToLocalStorage();
+
+        const newInput = linkCell.querySelector('.row-link');
+        if (newInput) {
+            newInput.focus();
+        }
+    }
+
+    function lockLinkInput(input) {
+        const val = input.value.trim();
+        if (!val) {
+            return;
+        }
+        input.readOnly = true;
+        input.classList.add('locked');
+        saveToLocalStorage();
+    }
+
+    function openSavedLink(btn) {
+        const row = btn.closest('tr');
+        const linkInput = row.querySelector('.row-link');
+        const url = linkInput.value.trim();
+        if (!url) {
+            linkInput.focus();
+            return;
+        }
+        const finalUrl = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+        window.open(finalUrl, '_blank', 'noopener');
     }
 
     function handlePaste(event, pasteArea) {
@@ -542,7 +715,12 @@
         const tbody = document.getElementById('tableBody');
         const rows = Array.from(tbody.children);
         if (rows[rows.length - 1] === row) {
-            addRow(getFormattedDate(), "NO REKENING", "-", "", false, null);
+            const newRow = addRow(getFormattedDate(), "NO REKENING", "-", "", false, null, "");
+            const newRekInput = newRow.querySelector('.row-rek');
+            if (newRekInput) {
+                newRekInput.focus();
+                newRekInput.select();
+            }
         }
     }
 
