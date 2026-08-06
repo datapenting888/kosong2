@@ -301,6 +301,32 @@
         .copy-open-btn:hover svg {
             fill: #0f1016;
         }
+        .toast-notif {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #212433;
+            border: 1px solid #d4af37;
+            color: #e5e7eb;
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+            max-width: 420px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        .toast-notif.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast-notif b {
+            color: #d4af37;
+        }
         .modal {
             display: none;
             position: fixed;
@@ -383,6 +409,8 @@
     <span class="close" onclick="closeModal()">&times;</span>
     <img class="modal-content" id="modalImg">
 </div>
+
+<div id="toastNotif" class="toast-notif"></div>
 
 <script>
     const bankList = ["DANA", "OVO", "GOPAY", "LINKAJA", "BCA", "BRI", "BNI", "MANDIRI", "JAGO", "MAYBANK", "BSI", "CIMB", "DANAMON", "SEABANK"];
@@ -611,6 +639,17 @@
         return newRow;
     }
 
+    let toastTimer = null;
+    function showToast(message, duration = 6000) {
+        const toast = document.getElementById('toastNotif');
+        toast.innerHTML = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+            toast.classList.remove('show');
+        }, duration);
+    }
+
     async function copyScreenshotAndOpenUploadSite(row) {
         const imgElem = row.querySelector('.preview-img');
         if (!imgElem) {
@@ -631,6 +670,7 @@
         }
 
         window.open('https://imgbb.com/', '_blank', 'noopener');
+        showToast("<b>Langkah selanjutnya:</b> di tab imgbb.com, klik UNGGAH lalu klik SALIN pada tautan yang muncul. Setelah tersalin, tutup tab tersebut lalu kembali ke sini dan tempel tautannya di kolom TAUTAN pada baris ini.");
         return true;
     }
 
