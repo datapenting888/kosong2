@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Transaksi & Rekening</title>
+    <title>Data Transaksi & Rekening (Auto-Row & Paste Image)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,7 +13,7 @@
             color: #333;
         }
         .container {
-            max-width: 1000px;
+            max-width: 1050px;
             margin: 0 auto;
             background: #fff;
             padding: 25px;
@@ -31,6 +31,15 @@
             margin-bottom: 15px;
             display: flex;
             gap: 10px;
+            align-items: center;
+        }
+        .info-text {
+            font-size: 13px;
+            color: #4a5568;
+            background: #edf2f7;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border-left: 4px solid #3182ce;
         }
         button {
             background-color: #3182ce;
@@ -86,16 +95,33 @@
             background: #fff;
         }
         input[type="file"] {
-            font-size: 12px;
-            max-width: 180px;
+            font-size: 11px;
+            max-width: 160px;
+        }
+        .paste-area {
+            border: 2px dashed #cbd5e0;
+            background: #f7fafc;
+            padding: 8px;
+            border-radius: 4px;
+            min-height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .paste-area:focus {
+            border-color: #3182ce;
+            background: #ebf8ff;
         }
         .preview-img {
-            max-width: 60px;
-            max-height: 40px;
+            max-width: 70px;
+            max-height: 50px;
             cursor: pointer;
             border-radius: 3px;
             border: 1px solid #cbd5e0;
-            vertical-align: middle;
         }
         .actions-col {
             width: 80px;
@@ -148,9 +174,8 @@
 <div class="container">
     <h2>Form Data Rekening & Screenshot Bukti Transaksi</h2>
     <div class="controls">
-        <button onclick="addRow()">+ Tambah Baris Baru</button>
-        <button class="btn-success" onclick="saveData()">Simpan Data (Local)</button>
-        <button onclick="loadData()">Muat Data Tersimpan</button>
+        <button onclick="addRow()">+ Tambah Baris</button>
+        <div class="info-text">💡 <b>Tips:</b> Klik pada area kotak screenshot, lalu tekan <b>Ctrl + V</b> untuk paste gambar langsung, atau pilih file dari komputer. Baris baru akan otomatis bertambah!</div>
     </div>
 
     <table id="transTable">
@@ -164,10 +189,10 @@
             </tr>
         </thead>
         <tbody id="tableBody">
-            <!-- Baris data contoh 1 (sesuai screenshot) -->
+            <!-- Baris data contoh 1 -->
             <tr>
                 <td><input type="date" class="row-date" value="2026-08-03"></td>
-                <td><input type="text" class="row-rek" value="901181440594" placeholder="Masukkan No Rekening"></td>
+                <td><input type="text" class="row-rek" value="901181440594" placeholder="No Rekening"></td>
                 <td>
                     <select class="row-jenis">
                         <option value="SEABANK" selected>SEABANK</option>
@@ -181,30 +206,10 @@
                     </select>
                 </td>
                 <td>
-                    <input type="file" accept="image/*" onchange="previewImage(this)">
-                    <div class="img-container"></div>
-                </td>
-                <td><button class="btn-delete" onclick="deleteRow(this)">Hapus</button></td>
-            </tr>
-            <!-- Baris data contoh 2 (sesuai screenshot) -->
-            <tr>
-                <td><input type="date" class="row-date" value="2026-08-04"></td>
-                <td><input type="text" class="row-rek" value="87825751929" placeholder="Masukkan No Rekening"></td>
-                <td>
-                    <select class="row-jenis">
-                        <option value="SEABANK">SEABANK</option>
-                        <option value="GOPAY" selected>GOPAY</option>
-                        <option value="BCA">BCA</option>
-                        <option value="DANA">DANA</option>
-                        <option value="OVO">OVO</option>
-                        <option value="BRI">BRI</option>
-                        <option value="MANDIRI">MANDIRI</option>
-                        <option value="BNI">BNI</option>
-                    </select>
-                </td>
-                <td>
-                    <input type="file" accept="image/*" onchange="previewImage(this)">
-                    <div class="img-container"></div>
+                    <div class="paste-area" tabindex="0" onpaste="handlePaste(event, this)" title="Klik lalu tekan Ctrl+V untuk paste gambar">
+                        <span style="font-size:11px; color:#718096;">Paste (Ctrl+V) / Upload</span>
+                        <input type="file" accept="image/*" onchange="handleFileSelect(this)" style="margin-top:2px;">
+                    </div>
                 </td>
                 <td><button class="btn-delete" onclick="deleteRow(this)">Hapus</button></td>
             </tr>
@@ -219,7 +224,6 @@
 </div>
 
 <script>
-    // Fungsi untuk mendapatkan tanggal hari ini format YYYY-MM-DD
     function getTodayDate() {
         const today = new Date();
         const yyyy = today.getFullYear();
@@ -236,7 +240,7 @@
         
         newRow.innerHTML = `
             <td><input type="date" class="row-date" value="${getTodayDate()}"></td>
-            <td><input type="text" class="row-rek" placeholder="Masukkan No Rekening"></td>
+            <td><input type="text" class="row-rek" placeholder="No Rekening"></td>
             <td>
                 <select class="row-jenis">
                     <option value="SEABANK">SEABANK</option>
@@ -250,57 +254,100 @@
                 </select>
             </td>
             <td>
-                <input type="file" accept="image/*" onchange="previewImage(this)">
-                <div class="img-container"></div>
+                <div class="paste-area" tabindex="0" onpaste="handlePaste(event, this)" title="Klik lalu tekan Ctrl+V untuk paste gambar">
+                    <span style="font-size:11px; color:#718096;">Paste (Ctrl+V) / Upload</span>
+                    <input type="file" accept="image/*" onchange="handleFileSelect(this)" style="margin-top:2px;">
+                </div>
             </td>
             <td><button class="btn-delete" onclick="deleteRow(this)">Hapus</button></td>
         `;
         tbody.appendChild(newRow);
+        return newRow;
     }
 
     function deleteRow(btn) {
         const row = btn.closest('tr');
-        row.remove();
+        // Jangan hapus jika itu satu-satunya baris tersisa
+        const tbody = document.getElementById('tableBody');
+        if (tbody.children.length > 1) {
+            row.remove();
+        } else {
+            alert("Minimal harus ada satu baris tersisa.");
+        }
     }
 
-    function previewImage(input) {
-        const container = input.nextElementSibling;
-        container.innerHTML = '';
+    // Handle File Upload dari storage
+    function handleFileSelect(input) {
         if (input.files && input.files[0]) {
-            // Otomatis update tanggal ke hari ini saat gambar di-upload jika tanggal masih kosong atau ingin disesuaikan otomatis
-            const row = input.closest('tr');
-            const dateInput = row.querySelector('.row-date');
-            if (!dateInput.value) {
-                dateInput.value = getTodayDate();
-            }
-
+            const file = input.files[0];
             const reader = new FileReader();
             reader.onload = function(e) {
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                img.className = 'preview-img';
-                img.title = 'Klik untuk memperbesar';
-                img.onclick = function() {
-                    openModal(e.target.result);
-                };
-                container.appendChild(img);
-                
-                // Sembunyikan input file setelah gambar dipilih agar rapi, diganti thumbnail & tombol ubah
-                input.style.display = 'none';
-                
-                const changeBtn = document.createElement('button');
-                changeBtn.innerText = 'Ganti';
-                changeBtn.style.fontSize = '10px';
-                changeBtn.style.marginLeft = '5px';
-                changeBtn.onclick = function() {
-                    input.style.display = 'inline-block';
-                    input.value = '';
-                    container.innerHTML = '';
-                };
-                container.appendChild(changeBtn);
+                processImageInput(input.closest('.paste-area'), e.target.result);
             }
-            reader.readAsDataURL(input.files[0]);
+            reader.readAsDataURL(file);
         }
+    }
+
+    // Handle Paste Gambar langsung (Ctrl+V)
+    function handlePaste(event, pasteArea) {
+        const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf("image") !== -1) {
+                const blob = items[i].getAsFile();
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    processImageInput(pasteArea, e.target.result);
+                };
+                reader.readAsDataURL(blob);
+                event.preventDefault(); // Mencegah paste teks default
+                break;
+            }
+        }
+    }
+
+    // Memproses gambar yang dimasukkan, menampilkan preview, set tanggal otomatis, & auto tambah baris baru
+    function processImageInput(pasteArea, dataUrl) {
+        const row = pasteArea.closest('tr');
+        
+        // 1. Set tanggal otomatis ke hari ini jika tanggal kosong
+        const dateInput = row.querySelector('.row-date');
+        if (!dateInput.value) {
+            dateInput.value = getTodayDate();
+        }
+
+        // 2. Tampilkan thumbnail gambar di dalam kotak
+        pasteArea.innerHTML = '';
+        
+        const img = document.createElement('img');
+        img.src = dataUrl;
+        img.className = 'preview-img';
+        img.title = 'Klik untuk memperbesar gambar';
+        img.onclick = function() {
+            openModal(dataUrl);
+        };
+        pasteArea.appendChild(img);
+
+        // Tambah tombol ganti kecil di bawah thumbnail
+        const changeContainer = document.createElement('div');
+        changeContainer.style.marginTop = '4px';
+        changeContainer.innerHTML = `<button style="font-size:9px; padding:2px 6px; background:#4a5568;" onclick="resetPasteArea(this)">Ganti</button>`;
+        pasteArea.appendChild(changeContainer);
+
+        // 3. Cek apakah ini baris terakhir. Jika ya, otomatis buat baris baru di bawahnya.
+        const tbody = document.getElementById('tableBody');
+        const rows = Array.from(tbody.children);
+        if (rows[rows.length - 1] === row) {
+            addRow();
+        }
+    }
+
+    // Reset area jika ingin mengganti gambar
+    function resetPasteArea(btn) {
+        const pasteArea = btn.closest('.paste-area');
+        pasteArea.innerHTML = `
+            <span style="font-size:11px; color:#718096;">Paste (Ctrl+V) / Upload</span>
+            <input type="file" accept="image/*" onchange="handleFileSelect(this)" style="margin-top:2px;">
+        `;
     }
 
     function openModal(src) {
@@ -315,20 +362,11 @@
         modal.style.display = 'none';
     }
 
-    // Klik di luar modal untuk menutup
     window.onclick = function(event) {
         const modal = document.getElementById('imgModal');
         if (event.target == modal) {
             modal.style.display = 'none';
         }
-    }
-
-    function saveData() {
-        alert("Fitur simpan lokal siap! Data teks dalam tabel aman di sesi browser Anda.");
-    }
-
-    function loadData() {
-        alert("Data berhasil dimuat.");
     }
 </script>
 
