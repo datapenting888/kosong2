@@ -87,14 +87,18 @@
             color: #2d3748;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             z-index: 10;
-            width: 340px;
+            width: 360px;
+            line-height: 1.6;
         }
         .info-popup.show {
             display: block;
         }
         .info-popup ul {
-            margin: 5px 0 0 15px;
+            margin: 8px 0 0 15px;
             padding: 0;
+        }
+        .info-popup li {
+            margin-bottom: 8px;
         }
         /* Style untuk Kolom Cari */
         .search-box {
@@ -102,7 +106,7 @@
             border: 1px solid #cbd5e0;
             border-radius: 4px;
             font-size: 13px;
-            width: 200px;
+            width: 160px;
             background: #fff;
         }
         /* Style untuk logo kalender di sebelah kanan */
@@ -242,8 +246,8 @@
                 </div>
             </div>
 
-            <!-- Kolom Cari berdasarkan nomor rekening atau jenis bank -->
-            <input type="text" id="searchInput" class="search-box" placeholder="🔍 Cari No Rek / Bank..." onkeyup="filterTable()">
+            <!-- Kolom Cari dengan placeholder "Cari" -->
+            <input type="text" id="searchInput" class="search-box" placeholder="🔍 Cari..." onkeyup="filterTable()">
         </div>
         
         <!-- Logo/Input Kalender Setting Tanggal di Sebelah Kanan -->
@@ -375,7 +379,7 @@
 
         let savedData = JSON.parse(localStorage.getItem('transaksiRekeningData')) || [];
         const now = new Date().getTime();
-        const threeWeeksMs = 21 * 24 * 60 * 60 * 1000; // 3 x 24 (selama 3 minggu / 21 hari)
+        const threeWeeksMs = 21 * 24 * 60 * 60 * 1000;
 
         savedData = savedData.filter(item => {
             return (now - item.timestamp) < threeWeeksMs;
