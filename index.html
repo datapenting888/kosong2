@@ -282,10 +282,10 @@
             </div>
         </div>
         
-        <!-- Logo/Input Kalender Setting Tanggal di Sebelah Kanan (Dibuat readonly/disabled agar tidak dapat diklik/diubah) -->
+        <!-- Logo/Input Kalender Setting Tanggal di Sebelah Kanan -->
         <div class="calendar-setting">
             <span>📅 Tanggal:</span>
-            <input type="date" id="globalDateSetting" disabled title="Tanggal disesuaikan per hari ini secara otomatis">
+            <input type="date" id="globalDateSetting" onchange="updateDefaultDate(this)" title="Pilih tanggal untuk baris berikutnya">
         </div>
     </div>
 
@@ -344,7 +344,17 @@
         }
     }
 
+    function updateDefaultDate(input) {
+        if (input.value) {
+            const parts = input.value.split('-');
+            customSelectedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+    }
+
     function getFormattedDate() {
+        if (customSelectedDate) {
+            return customSelectedDate;
+        }
         const today = new Date();
         const dd = String(today.getDate()).padStart(2, '0');
         const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -364,11 +374,6 @@
             input.value = "NO REKENING";
             input.classList.add("samar");
         }
-    }
-
-    function cleanRekeningInput(input) {
-        clearPlaceholder(input);
-        input.value = input.value.replace(/[^0-9]/g, '');
     }
 
     function filterTable() {
@@ -469,7 +474,7 @@
 
         newRow.innerHTML = `
             <td><input type="text" class="row-date" value="${dateStr}" ${isLocked ? 'disabled' : ''}></td>
-            <td><input type="text" class="row-rek${isSamar}" value="${rekVal}" onfocus="clearPlaceholder(this)" oninput="cleanRekeningInput(this)" onblur="restorePlaceholder(this)" ${isLocked ? 'disabled' : ''}></td>
+            <td><input type="text" class="row-rek${isSamar}" value="${rekVal}" onfocus="clearPlaceholder(this)" onblur="restorePlaceholder(this)" ${isLocked ? 'disabled' : ''}></td>
             <td>
                 <select class="row-jenis" ${isLocked ? 'disabled' : ''}>
                     <option value="-" ${jenisVal === '-' ? 'selected' : ''}>-</option>
@@ -539,12 +544,7 @@
         const tbody = document.getElementById('tableBody');
         const rows = Array.from(tbody.children);
         if (rows[rows.length - 1] === row) {
-            const newRow = addRow(getFormattedDate(), "NO REKENING", "-", "", false, null);
-            // Otomatis arahkan kursor ke kolom no rekening pada baris baru
-            const newRekInput = newRow.querySelector('.row-rek');
-            if (newRekInput) {
-                newRekInput.focus();
-            }
+            addRow(getFormattedDate(), "NO REKENING", "-", "", false, null);
         }
     }
 
