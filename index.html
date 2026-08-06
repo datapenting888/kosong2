@@ -39,7 +39,6 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            width: 100%;
         }
         /* Style untuk tombol Informasi (Logo i + Teks INFORMASI) */
         .info-container {
@@ -101,7 +100,7 @@
         .info-popup li {
             margin-bottom: 8px;
         }
-        /* Style untuk Kolom Cari di sebelah kiri */
+        /* Style untuk Kolom Cari */
         .search-box {
             padding: 6px 10px;
             border: 1px solid #cbd5e0;
@@ -121,7 +120,6 @@
             font-size: 13px;
             color: #2d3748;
             white-space: nowrap;
-            margin-left: auto;
         }
         .calendar-setting input[type="date"] {
             padding: 4px;
@@ -233,10 +231,7 @@
     <h2>Form Data Rekening & Screenshot Bukti Transaksi</h2>
     <div class="controls">
         <div class="left-controls">
-            <!-- Kolom Cari di sebelah paling kiri -->
-            <input type="text" id="searchInput" class="search-box" placeholder="Cari" onkeyup="filterTable()">
-
-            <!-- Tombol Informasi dengan Logo i dan Teks INFORMASI -->
+            <!-- Tombol Informasi dengan Logo i dan Teks INFORMASI (Kembali di sebelah kiri) -->
             <div class="info-container">
                 <button class="info-btn" onclick="toggleInfo(event)" title="Klik untuk informasi">
                     <span class="info-icon">i</span> INFORMASI
@@ -251,11 +246,14 @@
                 </div>
             </div>
 
-            <!-- Logo/Input Kalender Setting Tanggal di Sebelah Kanan -->
-            <div class="calendar-setting">
-                <span>📅 Tanggal:</span>
-                <input type="date" id="globalDateSetting" onchange="updateDefaultDate(this)" title="Pilih tanggal untuk baris berikutnya">
-            </div>
+            <!-- Kolom Cari di sebelah INFORMASI -->
+            <input type="text" id="searchInput" class="search-box" placeholder="Cari" onkeyup="filterTable()">
+        </div>
+        
+        <!-- Logo/Input Kalender Setting Tanggal di Sebelah Kanan -->
+        <div class="calendar-setting">
+            <span>📅 Tanggal:</span>
+            <input type="date" id="globalDateSetting" onchange="updateDefaultDate(this)" title="Pilih tanggal untuk baris berikutnya">
         </div>
     </div>
 
@@ -387,7 +385,7 @@
             return (now - item.timestamp) < threeWeeksMs;
         });
 
-        localStorage.setItem('transaksiRekeningData', JSON.stringify(savedData));
+.       localStorage.setItem('transaksiRekeningData', JSON.stringify(savedData));
 
         if (savedData.length === 0) {
             addRow(getFormattedDate(), "NO REKENING", "-", "", false, null);
