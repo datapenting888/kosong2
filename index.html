@@ -376,6 +376,13 @@
         }
     }
 
+    // Fungsi otomatis membersihkan tanda baca (-), spasi, atau karakter non-angka saat diketik/paste
+    function cleanRekeningInput(input) {
+        clearPlaceholder(input);
+        // Hanya menyisakan angka (menghapus spasi, strip -, dan karakter lain secara otomatis)
+        input.value = input.value.replace(/[^0-9]/g, '');
+    }
+
     function filterTable() {
         const input = document.getElementById('searchInput');
         const filter = input.value.toUpperCase();
@@ -474,7 +481,7 @@
 
         newRow.innerHTML = `
             <td><input type="text" class="row-date" value="${dateStr}" ${isLocked ? 'disabled' : ''}></td>
-            <td><input type="text" class="row-rek${isSamar}" value="${rekVal}" onfocus="clearPlaceholder(this)" onblur="restorePlaceholder(this)" ${isLocked ? 'disabled' : ''}></td>
+            <td><input type="text" class="row-rek${isSamar}" value="${rekVal}" onfocus="clearPlaceholder(this)" oninput="cleanRekeningInput(this)" onblur="restorePlaceholder(this)" ${isLocked ? 'disabled' : ''}></td>
             <td>
                 <select class="row-jenis" ${isLocked ? 'disabled' : ''}>
                     <option value="-" ${jenisVal === '-' ? 'selected' : ''}>-</option>
