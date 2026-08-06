@@ -34,14 +34,51 @@
             align-items: center;
             gap: 10px;
         }
-        .info-text {
-            font-size: 13px;
-            color: #4a5568;
-            background: #edf2f7;
-            padding: 8px 12px;
-            border-radius: 4px;
-            border-left: 4px solid #3182ce;
+        /* Style untuk tombol Informasi (Logo i) */
+        .info-container {
+            position: relative;
+            display: inline-block;
             flex-grow: 1;
+        }
+        .info-btn {
+            background-color: #3182ce;
+            color: white;
+            border: none;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .info-btn:hover {
+            background-color: #2b6cb0;
+        }
+        .info-popup {
+            display: none;
+            position: absolute;
+            top: 35px;
+            left: 0;
+            background: #edf2f7;
+            border: 1px solid #cbd5e0;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #2d3748;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 10;
+            width: 320px;
+        }
+        .info-popup.show {
+            display: block;
+        }
+        .info-popup ul {
+            margin: 5px 0 0 15px;
+            padding: 0;
         }
         /* Style untuk logo kalender di sebelah kanan */
         .calendar-setting {
@@ -164,9 +201,19 @@
 <div class="container">
     <h2>Form Data Rekening & Screenshot Bukti Transaksi</h2>
     <div class="controls">
-        <div class="info-text">💡 <b>Tips:</b> Klik kotak nomor rekening, ketik nomor, pilih jenis, lalu paste gambar (<b>Ctrl + V</b>) untuk simpan & tambah baris otomatis.</div>
+        <!-- Tombol Informasi dengan Logo i dan Popup Keterangan -->
+        <div class="info-container">
+            <button class="info-btn" onclick="toggleInfo(event)" title="Klik untuk informasi">i</button>
+            <div id="infoPopup" class="info-popup">
+                <b>Informasi Penggunaan:</b>
+                <ul>
+                    <li>Input nomor rekening dan gambar maka akan tersimpan secara otomatis.</li>
+                    <li>Data yang sudah di input akan terhapus secara otomatis jika sudah 7 x 24 jam (selama 2 minggu).</li>
+                </ul>
+            </div>
+        </div>
         
-        <!-- Logo/Input Kalender Setting Tanggal di Sebelah Kanan Tips -->
+        <!-- Logo/Input Kalender Setting Tanggal di Sebelah Kanan -->
         <div class="calendar-setting">
             <span>📅 Tanggal:</span>
             <input type="date" id="globalDateSetting" onchange="updateDefaultDate(this)" title="Pilih tanggal untuk baris berikutnya">
@@ -183,34 +230,7 @@
             </tr>
         </thead>
         <tbody id="tableBody">
-            <tr>
-                <td><input type="text" class="row-date" value="06/08/2026"></td>
-                <td><input type="text" class="row-rek samar" value="NO REKENING" onfocus="clearPlaceholder(this)" onblur="restorePlaceholder(this)"></td>
-                <td>
-                    <select class="row-jenis">
-                        <option value="-" selected>-</option>
-                        <option value="DANA">DANA</option>
-                        <option value="OVO">OVO</option>
-                        <option value="GOPAY">GOPAY</option>
-                        <option value="LINKAJA">LINKAJA</option>
-                        <option value="BCA">BCA</option>
-                        <option value="BRI">BRI</option>
-                        <option value="BNI">BNI</option>
-                        <option value="MANDIRI">MANDIRI</option>
-                        <option value="JAGO">JAGO</option>
-                        <option value="MAYBANK">MAYBANK</option>
-                        <option value="BSI">BSI</option>
-                        <option value="CIMB">CIMB</option>
-                        <option value="DANAMON">DANAMON</option>
-                        <option value="SEABANK">SEABANK</option>
-                    </select>
-                </td>
-                <td>
-                    <div class="paste-area" tabindex="0" onpaste="handlePaste(event, this)" title="Klik lalu tekan Ctrl+V untuk paste gambar">
-                        <span style="font-size:11px; color:#718096;">Klik & Paste (Ctrl+V)</span>
-                    </div>
-                </td>
-            </tr>
+            <!-- Data baris akan dimuat otomatis atau ditambah baris baru -->
         </tbody>
     </table>
 </div>
@@ -223,12 +243,11 @@
 
 <script>
     const bankList = ["DANA", "OVO", "GOPAY", "LINKAJA", "BCA", "BRI", "BNI", "MANDIRI", "JAGO", "MAYBANK", "BSI", "CIMB", "DANAMON", "SEABANK"];
-    
-    // Variabel untuk menyimpan tanggal custom jika diset melalui logo kalender
     let customSelectedDate = "";
 
-    // Set nilai awal input kalender pengaturan ke hari ini (YYYY-MM-DD)
+    // Load data tersimpan saat halaman dibuka, serta bersihkan data > 2 minggu (14 hari / 336 jam)
     window.addEventListener('DOMContentLoaded', () => {
+        // Set tanggal kalender global ke hari ini
         const today = new Date();
         const yyyy = today.getFullYear();
         let mm = today.getMonth() + 1;
@@ -236,7 +255,29 @@
         if (mm < 10) mm = '0' + mm;
         if (dd < 10) dd = '0' + dd;
         document.getElementById('globalDateSetting').value = `${yyyy}-${mm}-${dd}`;
+
+        loadAndCleanData();
     });
+
+    // Toggle Popup Informasi (Logo i)
+    function toggleInfo(event) {
+        event.stopPropagation();
+        const popup = document.getElementById('infoPopup');
+        popup.classList.toggle('show');
+    }
+
+    // Tutup popup informasi jika klik di luar area
+    window.onclick = function(event) {
+        const popup = document.getElementById('infoPopup');
+        if (!event.target.closest('.info-container') && popup.classList.contains('show')) {
+            popup.classList.remove('show');
+        }
+
+        const modal = document.getElementById('imgModal');
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
 
     function updateDefaultDate(input) {
         if (input.value) {
@@ -270,26 +311,92 @@
         }
     }
 
-    function addRow() {
+    // Load data dari localStorage dan hapus otomatis jika usia data > 2 minggu (7 x 24 jam x 2 = 336 jam)
+    function loadAndCleanData() {
         const tbody = document.getElementById('tableBody');
-        const newRow = document.createElement('tr');
-        
-        let optionsHtml = `<option value="-" selected>-</option>`;
-        bankList.forEach(bank => {
-            optionsHtml += `<option value="${bank}">${bank}</option>`;
+        tbody.innerHTML = '';
+
+        let savedData = JSON.parse(localStorage.getItem('transaksiRekeningData')) || [];
+        const now = new Date().getTime();
+        const twoWeeksMs = 14 * 24 * 60 * 60 * 1000; // 7 x 24 jam x 2 (2 minggu)
+
+        // Filter data yang umurnya belum lebih dari 2 minggu
+        savedData = savedData.filter(item => {
+            return (now - item.timestamp) < twoWeeksMs;
         });
 
+        // Simpan kembali data yang sudah difilter (yang kadaluarsa otomatis terhapus)
+        localStorage.setItem('transaksiRekeningData', JSON.stringify(savedData));
+
+        if (savedData.length === 0) {
+            addRow("", "NO REKENING", "-", "", false, null);
+        } else {
+            savedData.forEach(item => {
+                addRow(item.date, item.rek, item.jenis, item.imgUrl, item.isLocked, item.timestamp);
+            });
+            // Selalu sediakan 1 baris kosong baru di bawah untuk input selanjutnya
+            addRow(getFormattedDate(), "NO REKENING", "-", "", false, null);
+        }
+    }
+
+    function saveToLocalStorage() {
+        const rows = document.querySelectorAll('#transTable tbody tr');
+        const dataToSave = [];
+
+        rows.forEach(row => {
+            const date = row.querySelector('.row-date').value;
+            const rek = row.querySelector('.row-rek').value;
+            const jenis = row.querySelector('.row-jenis').value;
+            const imgContainer = row.querySelector('.paste-area');
+            const imgElem = imgContainer.querySelector('.preview-img');
+            const isLocked = row.querySelector('.row-rek').disabled;
+
+            if (isLocked && imgElem) {
+                dataToSave.push({
+                    date: date,
+                    rek: rek,
+                    jenis: jenis,
+                    imgUrl: imgElem.src,
+                    isLocked: true,
+                    timestamp: parseInt(row.dataset.timestamp) || new Date().getTime()
+                });
+            }
+        });
+
+        localStorage.setItem('transaksiRekeningData', JSON.stringify(dataToSave));
+    }
+
+    function addRow(dateVal = null, rekVal = "NO REKENING", jenisVal = "-", imgDataUrl = "", isLocked = false, timestamp = null) {
+        const tbody = document.getElementById('tableBody');
+        const newRow = document.createElement('tr');
+        if (timestamp) {
+            newRow.dataset.timestamp = timestamp;
+        }
+
+        let optionsHtml = '';
+        bankList.forEach(bank => {
+            const sel = (bank === jenisVal) ? ' selected' : '';
+            optionsHtml += `<option value="${bank}"${sel}>${bank}</option>`;
+        });
+
+        const isSamar = (rekVal === "NO REKENING") ? ' samar' : '';
+        const dateStr = dateVal !== null ? dateVal : getFormattedDate();
+
         newRow.innerHTML = `
-            <td><input type="text" class="row-date" value="${getFormattedDate()}"></td>
-            <td><input type="text" class="row-rek samar" value="NO REKENING" onfocus="clearPlaceholder(this)" onblur="restorePlaceholder(this)"></td>
+            <td><input type="text" class="row-date" value="${dateStr}" ${isLocked ? 'disabled' : ''}></td>
+            <td><input type="text" class="row-rek${isSamar}" value="${rekVal}" onfocus="clearPlaceholder(this)" onblur="restorePlaceholder(this)" ${isLocked ? 'disabled' : ''}></td>
             <td>
-                <select class="row-jenis">
+                <select class="row-jenis" ${isLocked ? 'disabled' : ''}>
+                    <option value="-" ${jenisVal === '-' ? 'selected' : ''}>-</option>
                     ${optionsHtml}
                 </select>
             </td>
             <td>
-                <div class="paste-area" tabindex="0" onpaste="handlePaste(event, this)" title="Klik lalu tekan Ctrl+V untuk paste gambar">
-                    <span style="font-size:11px; color:#718096;">Klik & Paste (Ctrl+V)</span>
+                <div class="paste-area" tabindex="0" onpaste="handlePaste(event, this)" title="Klik lalu tekan Ctrl+V untuk paste gambar" ${isLocked ? 'style="border:none; background:transparent;"' : ''}>
+                    ${isLocked && imgDataUrl ? 
+                        `<img src="${imgDataUrl}" class="preview-img" title="Klik untuk memperbesar gambar" onclick="openModal('${imgDataUrl}')">` : 
+                        `<span style="font-size:11px; color:#718096;">Klik & Paste (Ctrl+V)</span>`
+                    }
                 </div>
             </td>
         `;
@@ -320,11 +427,17 @@
         const jenisSelect = row.querySelector('.row-jenis');
         const dateInput = row.querySelector('.row-date');
         
-        if (rekInput.value === "NO REKENING") {
-            rekInput.value = "";
-            rekInput.classList.remove("samar");
+        if (rekInput.value === "NO REKENING" || rekInput.value.trim() === "") {
+            alert("Harap masukkan nomor rekening dan pilih jenis bank terlebih dahulu!");
+            return;
         }
 
+        if (jenisSelect.value === "-") {
+            alert("Harap pilih jenis bank terlebih dahulu!");
+            return;
+        }
+
+        rekInput.classList.remove("samar");
         rekInput.disabled = true;
         jenisSelect.disabled = true;
         dateInput.disabled = true;
@@ -340,10 +453,15 @@
         };
         pasteArea.appendChild(img);
 
+        // Set timestamp saat data diinput & disimpan otomatis
+        row.dataset.timestamp = new Date().getTime();
+        saveToLocalStorage();
+
+        // Tambah baris baru kosong otomatis di bawahnya
         const tbody = document.getElementById('tableBody');
         const rows = Array.from(tbody.children);
         if (rows[rows.length - 1] === row) {
-            addRow();
+            addRow(getFormattedDate(), "NO REKENING", "-", "", false, null);
         }
     }
 
@@ -357,13 +475,6 @@
     function closeModal() {
         const modal = document.getElementById('imgModal');
         modal.style.display = 'none';
-    }
-
-    window.onclick = function(event) {
-        const modal = document.getElementById('imgModal');
-        if (event.target == modal) {
-            modal.style.display = 'none';
-        }
     }
 </script>
 
