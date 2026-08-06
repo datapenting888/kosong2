@@ -74,6 +74,10 @@
             font-size: 13px;
             background: #fff;
         }
+        /* Style untuk teks samar (placeholder-like) */
+        .row-rek.samar {
+            color: #a0aec0;
+        }
         input[type="text"]:disabled, select:disabled {
             background-color: #edf2f7;
             color: #2d3748;
@@ -140,7 +144,7 @@
 <div class="container">
     <h2>Form Data Rekening & Screenshot Bukti Transaksi</h2>
     <div class="controls">
-        <div class="info-text">💡 <b>Tips:</b> Ketik nomor rekening, pilih jenis bank, lalu klik kotak screenshot dan tekan <b>Ctrl + V</b> untuk menyimpan data dan menambah baris baru secara otomatis.</div>
+        <div class="info-text">💡 <b>Tips:</b> Klik kotak nomor rekening, ketik nomor Anda, pilih jenis bank, lalu paste gambar (<b>Ctrl + V</b>) pada kotak screenshot untuk menyimpan & menambah baris baru.</div>
     </div>
 
     <table id="transTable">
@@ -153,10 +157,9 @@
             </tr>
         </thead>
         <tbody id="tableBody">
-            <!-- Baris Baru Kosong Pertama -->
             <tr>
                 <td><input type="text" class="row-date" value="06/08/2026"></td>
-                <td><input type="text" class="row-rek" value="NO REKENING"></td>
+                <td><input type="text" class="row-rek samar" value="NO REKENING" onfocus="clearPlaceholder(this)" onblur="restorePlaceholder(this)"></td>
                 <td>
                     <select class="row-jenis">
                         <option value="-" selected>-</option>
@@ -203,6 +206,20 @@
         return `${dd}/${mm}/${yyyy}`;
     }
 
+    function clearPlaceholder(input) {
+        if (input.value === "NO REKENING") {
+            input.value = "";
+            input.classList.remove("samar");
+        }
+    }
+
+    function restorePlaceholder(input) {
+        if (input.value.trim() === "") {
+            input.value = "NO REKENING";
+            input.classList.add("samar");
+        }
+    }
+
     function addRow() {
         const tbody = document.getElementById('tableBody');
         const newRow = document.createElement('tr');
@@ -214,7 +231,7 @@
 
         newRow.innerHTML = `
             <td><input type="text" class="row-date" value="${getFormattedDate()}"></td>
-            <td><input type="text" class="row-rek" value="NO REKENING"></td>
+            <td><input type="text" class="row-rek samar" value="NO REKENING" onfocus="clearPlaceholder(this)" onblur="restorePlaceholder(this)"></td>
             <td>
                 <select class="row-jenis">
                     ${optionsHtml}
@@ -249,16 +266,20 @@
     function processImageInput(pasteArea, dataUrl) {
         const row = pasteArea.closest('tr');
         
-        // Kunci / disable input Nomor Rekening dan Jenis Bank agar tidak bisa diganti
         const rekInput = row.querySelector('.row-rek');
         const jenisSelect = row.querySelector('.row-jenis');
         const dateInput = row.querySelector('.row-date');
         
+        // Jika masih default "NO REKENING", kosongkan atau tandai
+        if (rekInput.value === "NO REKENING") {
+            rekInput.value = "";
+            rekInput.classList.remove("samar");
+        }
+
         rekInput.disabled = true;
         jenisSelect.disabled = true;
         dateInput.disabled = true;
 
-        // Tampilkan gambar preview
         pasteArea.innerHTML = '';
         
         const img = document.createElement('img');
@@ -270,7 +291,6 @@
         };
         pasteArea.appendChild(img);
 
-        // Tambah baris baru otomatis di bawahnya
         const tbody = document.getElementById('tableBody');
         const rows = Array.from(tbody.children);
         if (rows[rows.length - 1] === row) {
