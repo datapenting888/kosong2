@@ -74,6 +74,12 @@
             font-size: 13px;
             background: #fff;
         }
+        input[type="text"]:disabled, select:disabled {
+            background-color: #edf2f7;
+            color: #2d3748;
+            border-color: #cbd5e0;
+            font-weight: bold;
+        }
         .paste-area {
             border: 2px dashed #cbd5e0;
             background: #f7fafc;
@@ -134,7 +140,7 @@
 <div class="container">
     <h2>Form Data Rekening & Screenshot Bukti Transaksi</h2>
     <div class="controls">
-        <div class="info-text">💡 <b>Tips:</b> Ketik nomor rekening, pilih jenis bank, lalu klik kotak screenshot dan tekan <b>Ctrl + V</b>. Baris baru akan otomatis tersimpan & bertambah!</div>
+        <div class="info-text">💡 <b>Tips:</b> Ketik nomor rekening, pilih jenis bank, lalu klik kotak screenshot dan tekan <b>Ctrl + V</b> untuk menyimpan data dan menambah baris baru secara otomatis.</div>
     </div>
 
     <table id="transTable">
@@ -147,41 +153,16 @@
             </tr>
         </thead>
         <tbody id="tableBody">
+            <!-- Baris Baru Kosong Pertama -->
             <tr>
-                <td><input type="text" class="row-date" value="03/08/2026"></td>
-                <td><input type="text" class="row-rek" value="901181440594" placeholder="No Rekening"></td>
+                <td><input type="text" class="row-date" value="06/08/2026"></td>
+                <td><input type="text" class="row-rek" value="NO REKENING"></td>
                 <td>
                     <select class="row-jenis">
+                        <option value="-" selected>-</option>
                         <option value="DANA">DANA</option>
                         <option value="OVO">OVO</option>
                         <option value="GOPAY">GOPAY</option>
-                        <option value="LINKAJA">LINKAJA</option>
-                        <option value="BCA">BCA</option>
-                        <option value="BRI">BRI</option>
-                        <option value="BNI">BNI</option>
-                        <option value="MANDIRI">MANDIRI</option>
-                        <option value="JAGO">JAGO</option>
-                        <option value="MAYBANK">MAYBANK</option>
-                        <option value="BSI">BSI</option>
-                        <option value="CIMB">CIMB</option>
-                        <option value="DANAMON">DANAMON</option>
-                        <option value="SEABANK" selected>SEABANK</option>
-                    </select>
-                </td>
-                <td>
-                    <div class="paste-area" tabindex="0" onpaste="handlePaste(event, this)" title="Klik lalu tekan Ctrl+V untuk paste gambar">
-                        <span style="font-size:11px; color:#718096;">Klik & Paste (Ctrl+V)</span>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td><input type="text" class="row-date" value="04/08/2026"></td>
-                <td><input type="text" class="row-rek" value="87825751929" placeholder="No Rekening"></td>
-                <td>
-                    <select class="row-jenis">
-                        <option value="DANA">DANA</option>
-                        <option value="OVO">OVO</option>
-                        <option value="GOPAY" selected>GOPAY</option>
                         <option value="LINKAJA">LINKAJA</option>
                         <option value="BCA">BCA</option>
                         <option value="BRI">BRI</option>
@@ -226,14 +207,14 @@
         const tbody = document.getElementById('tableBody');
         const newRow = document.createElement('tr');
         
-        let optionsHtml = '';
+        let optionsHtml = `<option value="-" selected>-</option>`;
         bankList.forEach(bank => {
             optionsHtml += `<option value="${bank}">${bank}</option>`;
         });
 
         newRow.innerHTML = `
             <td><input type="text" class="row-date" value="${getFormattedDate()}"></td>
-            <td><input type="text" class="row-rek" placeholder="No Rekening"></td>
+            <td><input type="text" class="row-rek" value="NO REKENING"></td>
             <td>
                 <select class="row-jenis">
                     ${optionsHtml}
@@ -268,11 +249,16 @@
     function processImageInput(pasteArea, dataUrl) {
         const row = pasteArea.closest('tr');
         
+        // Kunci / disable input Nomor Rekening dan Jenis Bank agar tidak bisa diganti
+        const rekInput = row.querySelector('.row-rek');
+        const jenisSelect = row.querySelector('.row-jenis');
         const dateInput = row.querySelector('.row-date');
-        if (!dateInput.value) {
-            dateInput.value = getFormattedDate();
-        }
+        
+        rekInput.disabled = true;
+        jenisSelect.disabled = true;
+        dateInput.disabled = true;
 
+        // Tampilkan gambar preview
         pasteArea.innerHTML = '';
         
         const img = document.createElement('img');
@@ -284,23 +270,12 @@
         };
         pasteArea.appendChild(img);
 
-        const changeContainer = document.createElement('div');
-        changeContainer.style.marginTop = '4px';
-        changeContainer.innerHTML = `<button style="font-size:9px; padding:2px 6px; background:#4a5568; color:white; border:none; border-radius:3px; cursor:pointer;" onclick="resetPasteArea(this)">Ganti</button>`;
-        pasteArea.appendChild(changeContainer);
-
+        // Tambah baris baru otomatis di bawahnya
         const tbody = document.getElementById('tableBody');
         const rows = Array.from(tbody.children);
         if (rows[rows.length - 1] === row) {
             addRow();
         }
-    }
-
-    function resetPasteArea(btn) {
-        const pasteArea = btn.closest('.paste-area');
-        pasteArea.innerHTML = `
-            <span style="font-size:11px; color:#718096;">Klik & Paste (Ctrl+V)</span>
-        `;
     }
 
     function openModal(src) {
