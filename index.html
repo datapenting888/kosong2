@@ -555,15 +555,15 @@
                 </button>`;
         }
         return `
-            <button type="button" class="open-link-btn copy-open-btn" onclick="handleCopyAndOpen(this)" title="Salin screenshot & buka phototourl.com">
+            <button type="button" class="open-link-btn copy-open-btn" onclick="handleCopyAndOpen(this)" title="Salin screenshot & buka imgbb.com">
                 ${openLinkIconSvg}
             </button>`;
     }
 
     function buildEditableLinkInputHtml() {
         return `
-            <input type="text" class="row-link" placeholder="Tempel tautan di sini" oninput="saveToLocalStorage()" onblur="lockLinkInput(this)" onkeydown="if(event.key==='Enter'){this.blur();}" title="Tempel tautan hasil unggah dari phototourl.com">
-            <button type="button" class="open-link-btn" onclick="openSavedLink(this)" title="Belum ada tautan? Klik untuk kembali ke phototourl.com">
+            <input type="text" class="row-link" placeholder="Tempel tautan di sini" oninput="saveToLocalStorage()" onblur="lockLinkInput(this)" onkeydown="if(event.key==='Enter'){this.blur();}" title="Tempel tautan hasil unggah dari imgbb.com">
+            <button type="button" class="open-link-btn" onclick="openSavedLink(this)" title="Belum ada tautan? Klik untuk kembali ke imgbb.com">
                 ${openLinkIconSvg}
             </button>`;
     }
@@ -611,7 +611,7 @@
         return newRow;
     }
 
-    async function copyScreenshotAndOpenPhototourl(row) {
+    async function copyScreenshotAndOpenUploadSite(row) {
         const imgElem = row.querySelector('.preview-img');
         if (!imgElem) {
             alert("Belum ada screenshot pada baris ini. Silakan tempel gambar terlebih dahulu.");
@@ -630,13 +630,13 @@
             console.warn("Gagal menyalin gambar ke clipboard:", err);
         }
 
-        window.open('https://phototourl.com/id', '_blank', 'noopener');
+        window.open('https://imgbb.com/', '_blank', 'noopener');
         return true;
     }
 
     async function handleCopyAndOpen(btn) {
         const row = btn.closest('tr');
-        const success = await copyScreenshotAndOpenPhototourl(row);
+        const success = await copyScreenshotAndOpenUploadSite(row);
         if (!success) {
             return;
         }
@@ -667,7 +667,7 @@
         const url = linkInput.value.trim();
 
         if (!url) {
-            await copyScreenshotAndOpenPhototourl(row);
+            await copyScreenshotAndOpenUploadSite(row);
             linkInput.focus();
             return;
         }
