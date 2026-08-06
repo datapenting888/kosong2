@@ -6,26 +6,30 @@
     <title>Data Transaksi & Rekening</title>
     <style>
         body {
+            /* Warna latar belakang gelap sesuai contoh gambar */
+            background-color: #0f1016;
             font-family: Arial, sans-serif;
-            background-color: #f4f6f9;
             margin: 0;
             padding: 20px;
-            color: #333;
+            color: #d1d5db;
         }
         .container {
             max-width: 950px;
             margin: 0 auto;
-            background: #fff;
+            background: #181a26;
             padding: 25px;
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
         }
+        /* Style Judul sesuai dengan gaya pada gambar */
         h2 {
             margin-top: 0;
-            color: #1a365d;
-            font-size: 22px;
-            border-bottom: 2px solid #e2e8f0;
+            color: #d4af37; /* Warna emas/kuning */
+            font-size: 20px;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #d4af37;
             padding-bottom: 10px;
+            font-weight: bold;
         }
         .controls {
             margin-bottom: 15px;
@@ -38,7 +42,7 @@
         .left-controls {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
         }
         /* Style untuk tombol Informasi (Logo i + Teks INFORMASI) */
         .info-container {
@@ -46,8 +50,8 @@
             display: inline-block;
         }
         .info-btn {
-            background-color: #3182ce;
-            color: white;
+            background-color: #d4af37;
+            color: #0f1016;
             border: none;
             padding: 6px 12px;
             border-radius: 4px;
@@ -57,16 +61,16 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         .info-btn:hover {
-            background-color: #2b6cb0;
+            background-color: #c19b2e;
         }
         .info-icon {
             width: 18px;
             height: 18px;
-            background-color: white;
-            color: #3182ce;
+            background-color: #0f1016;
+            color: #d4af37;
             border-radius: 50%;
             display: inline-flex;
             align-items: center;
@@ -79,13 +83,13 @@
             position: absolute;
             top: 40px;
             left: 0;
-            background: #edf2f7;
-            border: 1px solid #cbd5e0;
+            background: #212433;
+            border: 1px solid #d4af37;
             padding: 12px;
             border-radius: 6px;
             font-size: 13px;
-            color: #2d3748;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            color: #e5e7eb;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
             z-index: 10;
             width: 360px;
             line-height: 1.6;
@@ -100,79 +104,107 @@
         .info-popup li {
             margin-bottom: 8px;
         }
-        /* Style untuk Kolom Cari */
+        /* Style untuk Kolom Cari model kapsul dengan ikon kaca pembesar */
+        .search-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+        .search-wrapper svg {
+            position: absolute;
+            left: 12px;
+            width: 16px;
+            height: 16px;
+            fill: #9ca3af;
+            pointer-events: none;
+        }
         .search-box {
-            padding: 6px 10px;
-            border: 1px solid #cbd5e0;
-            border-radius: 4px;
+            padding: 8px 12px 8px 36px;
+            border: 1px solid #374151;
+            border-radius: 20px;
             font-size: 13px;
-            width: 160px;
-            background: #fff;
+            width: 180px;
+            background: #212433;
+            color: #fff;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .search-box::placeholder {
+            color: #9ca3af;
+        }
+        .search-box:focus {
+            background: #181a26;
+            border-color: #d4af37;
+            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
         }
         /* Style untuk logo kalender di sebelah kanan */
         .calendar-setting {
             display: flex;
             align-items: center;
             gap: 8px;
-            background: #edf2f7;
+            background: #212433;
             padding: 8px 12px;
             border-radius: 4px;
             font-size: 13px;
-            color: #2d3748;
+            color: #e5e7eb;
             white-space: nowrap;
+            border: 1px solid #374151;
         }
         .calendar-setting input[type="date"] {
             padding: 4px;
-            border: 1px solid #cbd5e0;
+            border: 1px solid #4b5563;
             border-radius: 4px;
             font-size: 12px;
-            background: #fff;
+            background: #181a26;
+            color: #fff;
         }
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
-            background: #fff;
+            background: #181a26;
         }
         th {
-            background-color: #dd6b20;
-            color: white;
+            background-color: #d4af37;
+            color: #0f1016;
             text-align: center;
             padding: 12px 8px;
             font-size: 14px;
-            border: 1px solid #c05621;
+            border: 1px solid #b8972e;
+            font-weight: bold;
         }
         td {
-            border: 1px solid #cbd5e0;
+            border: 1px solid #374151;
             padding: 8px;
             text-align: center;
             vertical-align: middle;
-            background-color: #ebf8ff;
+            background-color: #212433;
         }
         tr:nth-child(even) td {
-            background-color: #e2e8f0;
+            background-color: #1a1d29;
         }
         input[type="text"], select {
             width: 90%;
             padding: 6px;
-            border: 1px solid #a0aec0;
+            border: 1px solid #4b5563;
             border-radius: 4px;
             text-align: center;
             font-size: 13px;
-            background: #fff;
+            background: #181a26;
+            color: #fff;
         }
         .row-rek.samar {
-            color: #a0aec0;
+            color: #6b7280;
         }
         input[type="text"]:disabled, select:disabled {
-            background-color: #edf2f7;
-            color: #2d3748;
-            border-color: #cbd5e0;
+            background-color: #2d3142;
+            color: #e5e7eb;
+            border-color: #4b5563;
             font-weight: bold;
         }
         .paste-area {
-            border: 2px dashed #cbd5e0;
-            background: #f7fafc;
+            border: 2px dashed #4b5563;
+            background: #181a26;
             padding: 10px;
             border-radius: 4px;
             min-height: 45px;
@@ -185,15 +217,15 @@
             transition: border-color 0.2s;
         }
         .paste-area:focus {
-            border-color: #3182ce;
-            background: #ebf8ff;
+            border-color: #d4af37;
+            background: #212433;
         }
         .preview-img {
             max-width: 70px;
             max-height: 50px;
             cursor: pointer;
             border-radius: 3px;
-            border: 1px solid #cbd5e0;
+            border: 1px solid #4b5563;
         }
         .modal {
             display: none;
@@ -205,7 +237,7 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0,0,0,0.8);
+            background-color: rgba(0,0,0,0.85);
         }
         .modal-content {
             margin: auto;
@@ -228,10 +260,10 @@
 <body>
 
 <div class="container">
-    <h2>Form Data Rekening & Screenshot Bukti Transaksi</h2>
+    <h2>KALKULATOR BOLA PNG</h2>
     <div class="controls">
         <div class="left-controls">
-            <!-- Tombol Informasi dengan Logo i dan Teks INFORMASI (Kembali di sebelah kiri) -->
+            <!-- Tombol Informasi dengan Logo i dan Teks INFORMASI -->
             <div class="info-container">
                 <button class="info-btn" onclick="toggleInfo(event)" title="Klik untuk informasi">
                     <span class="info-icon">i</span> INFORMASI
@@ -246,8 +278,13 @@
                 </div>
             </div>
 
-            <!-- Kolom Cari di sebelah INFORMASI -->
-            <input type="text" id="searchInput" class="search-box" placeholder="Cari" onkeyup="filterTable()">
+            <!-- Kolom Cari model kapsul dengan ikon kaca pembesar di sebelah kiri -->
+            <div class="search-wrapper">
+                <svg viewBox="0 0 24 24">
+                    <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+                <input type="text" id="searchInput" class="search-box" placeholder="Cari" onkeyup="filterTable()">
+            </div>
         </div>
         
         <!-- Logo/Input Kalender Setting Tanggal di Sebelah Kanan -->
@@ -385,7 +422,7 @@
             return (now - item.timestamp) < threeWeeksMs;
         });
 
-.       localStorage.setItem('transaksiRekeningData', JSON.stringify(savedData));
+        localStorage.setItem('transaksiRekeningData', JSON.stringify(savedData));
 
         if (savedData.length === 0) {
             addRow(getFormattedDate(), "NO REKENING", "-", "", false, null);
@@ -453,7 +490,7 @@
                 <div class="paste-area" tabindex="0" onpaste="handlePaste(event, this)" title="Klik lalu tekan Ctrl+V untuk paste gambar" ${isLocked ? 'style="border:none; background:transparent;"' : ''}>
                     ${isLocked && imgDataUrl ? 
                         `<img src="${imgDataUrl}" class="preview-img" title="Klik untuk memperbesar gambar" onclick="openModal('${imgDataUrl}')">` : 
-                        `<span style="font-size:11px; color:#718096;">Klik & Paste (Ctrl+V)</span>`
+                        `<span style="font-size:11px; color:#9ca3af;">Klik & Paste (Ctrl+V)</span>`
                     }
                 </div>
             </td>
@@ -520,7 +557,7 @@
         const modal = document.getElementById('imgModal');
         const modalImg = document.getElementById('modalImg');
         modal.style.display = 'block';
-        modalImg.src = src;
+        modalImg.src = **src**;
     }
 
     function closeModal() {
