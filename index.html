@@ -563,7 +563,7 @@
     function buildEditableLinkInputHtml() {
         return `
             <input type="text" class="row-link" placeholder="Tempel tautan di sini" oninput="saveToLocalStorage()" onblur="lockLinkInput(this)" onkeydown="if(event.key==='Enter'){this.blur();}" title="Tempel tautan hasil unggah dari phototourl.com">
-            <button type="button" class="open-link-btn" onclick="openSavedLink(this)" title="Buka tautan">
+            <button type="button" class="open-link-btn" onclick="openSavedLink(this)" title="Belum ada tautan? Klik untuk kembali ke phototourl.com">
                 ${openLinkIconSvg}
             </button>`;
     }
@@ -611,12 +611,11 @@
         return newRow;
     }
 
-    async function handleCopyAndOpen(btn) {
-        const row = btn.closest('tr');
+    async function copyScreenshotAndOpenPhototourl(row) {
         const imgElem = row.querySelector('.preview-img');
         if (!imgElem) {
             alert("Belum ada screenshot pada baris ini. Silakan tempel gambar terlebih dahulu.");
-            return;
+            return false;
         }
 
         try {
@@ -632,6 +631,15 @@
         }
 
         window.open('https://phototourl.com/id', '_blank', 'noopener');
+        return true;
+    }
+
+    async function handleCopyAndOpen(btn) {
+        const row = btn.closest('tr');
+        const success = await copyScreenshotAndOpenPhototourl(row);
+        if (!success) {
+            return;
+        }
 
         const linkCell = row.querySelector('.link-cell');
         linkCell.innerHTML = buildEditableLinkInputHtml();
@@ -653,14 +661,17 @@
         saveToLocalStorage();
     }
 
-    function openSavedLink(btn) {
+    async function openSavedLink(btn) {
         const row = btn.closest('tr');
         const linkInput = row.querySelector('.row-link');
         const url = linkInput.value.trim();
+
         if (!url) {
+            await copyScreenshotAndOpenPhototourl(row);
             linkInput.focus();
             return;
         }
+
         const finalUrl = /^https?:\/\//i.test(url) ? url : `https://${url}`;
         window.open(finalUrl, '_blank', 'noopener');
     }
