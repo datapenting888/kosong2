@@ -1,1 +1,336 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Transaksi & Rekening</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        h2 {
+            margin-top: 0;
+            color: #1a365d;
+            font-size: 22px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        .controls {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            background-color: #3182ce;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #2b6cb0;
+        }
+        button.btn-success {
+            background-color: #38a169;
+        }
+        button.btn-success:hover {
+            background-color: #2f855a;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: #fff;
+        }
+        th {
+            background-color: #dd6b20; /* Warna jingga mirip spreadsheet */
+            color: white;
+            text-align: center;
+            padding: 12px 8px;
+            font-size: 14px;
+            border: 1px solid #c05621;
+        }
+        td {
+            border: 1px solid #cbd5e0;
+            padding: 8px;
+            text-align: center;
+            vertical-align: middle;
+            background-color: #ebf8ff; /* Warna latar belakang biru muda mirip spreadsheet */
+        }
+        tr:nth-child(even) td {
+            background-color: #e2e8f0;
+        }
+        input[type="date"], input[type="text"], select {
+            width: 90%;
+            padding: 6px;
+            border: 1px solid #a0aec0;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 13px;
+            background: #fff;
+        }
+        input[type="file"] {
+            font-size: 12px;
+            max-width: 180px;
+        }
+        .preview-img {
+            max-width: 60px;
+            max-height: 40px;
+            cursor: pointer;
+            border-radius: 3px;
+            border: 1px solid #cbd5e0;
+            vertical-align: middle;
+        }
+        .actions-col {
+            width: 80px;
+        }
+        .btn-delete {
+            background-color: #e53e3e;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-delete:hover {
+            background-color: #c53030;
+        }
+        /* Modal untuk preview gambar besar */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            padding-top: 60px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+        }
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 80%;
+            max-height: 80vh;
+            border-radius: 5px;
+        }
+        .close {
+            position: absolute;
+            top: 30px;
+            right: 45px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
 
+<div class="container">
+    <h2>Form Data Rekening & Screenshot Bukti Transaksi</h2>
+    <div class="controls">
+        <button onclick="addRow()">+ Tambah Baris Baru</button>
+        <button class="btn-success" onclick="saveData()">Simpan Data (Local)</button>
+        <button onclick="loadData()">Muat Data Tersimpan</button>
+    </div>
+
+    <table id="transTable">
+        <thead>
+            <tr>
+                <th style="width: 18%;">TANGGAL</th>
+                <th style="width: 25%;">NOMOR REKENING</th>
+                <th style="width: 22%;">JENIS</th>
+                <th style="width: 25%;">SCREENSHOT</th>
+                <th class="actions-col">AKSI</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <!-- Baris data contoh 1 (sesuai screenshot) -->
+            <tr>
+                <td><input type="date" class="row-date" value="2026-08-03"></td>
+                <td><input type="text" class="row-rek" value="901181440594" placeholder="Masukkan No Rekening"></td>
+                <td>
+                    <select class="row-jenis">
+                        <option value="SEABANK" selected>SEABANK</option>
+                        <option value="GOPAY">GOPAY</option>
+                        <option value="BCA">BCA</option>
+                        <option value="DANA">DANA</option>
+                        <option value="OVO">OVO</option>
+                        <option value="BRI">BRI</option>
+                        <option value="MANDIRI">MANDIRI</option>
+                        <option value="BNI">BNI</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="file" accept="image/*" onchange="previewImage(this)">
+                    <div class="img-container"></div>
+                </td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">Hapus</button></td>
+            </tr>
+            <!-- Baris data contoh 2 (sesuai screenshot) -->
+            <tr>
+                <td><input type="date" class="row-date" value="2026-08-04"></td>
+                <td><input type="text" class="row-rek" value="87825751929" placeholder="Masukkan No Rekening"></td>
+                <td>
+                    <select class="row-jenis">
+                        <option value="SEABANK">SEABANK</option>
+                        <option value="GOPAY" selected>GOPAY</option>
+                        <option value="BCA">BCA</option>
+                        <option value="DANA">DANA</option>
+                        <option value="OVO">OVO</option>
+                        <option value="BRI">BRI</option>
+                        <option value="MANDIRI">MANDIRI</option>
+                        <option value="BNI">BNI</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="file" accept="image/*" onchange="previewImage(this)">
+                    <div class="img-container"></div>
+                </td>
+                <td><button class="btn-delete" onclick="deleteRow(this)">Hapus</button></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal Preview -->
+<div id="imgModal" class="modal">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <img class="modal-content" id="modalImg">
+</div>
+
+<script>
+    // Fungsi untuk mendapatkan tanggal hari ini format YYYY-MM-DD
+    function getTodayDate() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        let mm = today.getMonth() + 1;
+        let dd = today.getDate();
+        if (mm < 10) mm = '0' + mm;
+        if (dd < 10) dd = '0' + dd;
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function addRow() {
+        const tbody = document.getElementById('tableBody');
+        const newRow = document.createElement('tr');
+        
+        newRow.innerHTML = `
+            <td><input type="date" class="row-date" value="${getTodayDate()}"></td>
+            <td><input type="text" class="row-rek" placeholder="Masukkan No Rekening"></td>
+            <td>
+                <select class="row-jenis">
+                    <option value="SEABANK">SEABANK</option>
+                    <option value="GOPAY">GOPAY</option>
+                    <option value="BCA">BCA</option>
+                    <option value="DANA">DANA</option>
+                    <option value="OVO">OVO</option>
+                    <option value="BRI">BRI</option>
+                    <option value="MANDIRI">MANDIRI</option>
+                    <option value="BNI">BNI</option>
+                </select>
+            </td>
+            <td>
+                <input type="file" accept="image/*" onchange="previewImage(this)">
+                <div class="img-container"></div>
+            </td>
+            <td><button class="btn-delete" onclick="deleteRow(this)">Hapus</button></td>
+        `;
+        tbody.appendChild(newRow);
+    }
+
+    function deleteRow(btn) {
+        const row = btn.closest('tr');
+        row.remove();
+    }
+
+    function previewImage(input) {
+        const container = input.nextElementSibling;
+        container.innerHTML = '';
+        if (input.files && input.files[0]) {
+            // Otomatis update tanggal ke hari ini saat gambar di-upload jika tanggal masih kosong atau ingin disesuaikan otomatis
+            const row = input.closest('tr');
+            const dateInput = row.querySelector('.row-date');
+            if (!dateInput.value) {
+                dateInput.value = getTodayDate();
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'preview-img';
+                img.title = 'Klik untuk memperbesar';
+                img.onclick = function() {
+                    openModal(e.target.result);
+                };
+                container.appendChild(img);
+                
+                // Sembunyikan input file setelah gambar dipilih agar rapi, diganti thumbnail & tombol ubah
+                input.style.display = 'none';
+                
+                const changeBtn = document.createElement('button');
+                changeBtn.innerText = 'Ganti';
+                changeBtn.style.fontSize = '10px';
+                changeBtn.style.marginLeft = '5px';
+                changeBtn.onclick = function() {
+                    input.style.display = 'inline-block';
+                    input.value = '';
+                    container.innerHTML = '';
+                };
+                container.appendChild(changeBtn);
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function openModal(src) {
+        const modal = document.getElementById('imgModal');
+        const modalImg = document.getElementById('modalImg');
+        modal.style.display = 'block';
+        modalImg.src = src;
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('imgModal');
+        modal.style.display = 'none';
+    }
+
+    // Klik di luar modal untuk menutup
+    window.onclick = function(event) {
+        const modal = document.getElementById('imgModal');
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    function saveData() {
+        alert("Fitur simpan lokal siap! Data teks dalam tabel aman di sesi browser Anda.");
+    }
+
+    function loadData() {
+        alert("Data berhasil dimuat.");
+    }
+</script>
+
+</body>
+</html>
