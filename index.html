@@ -709,6 +709,11 @@
         };
         pasteArea.appendChild(img);
 
+        const linkCell = row.querySelector('.link-cell');
+        if (linkCell) {
+            linkCell.innerHTML = buildLinkCellHtml(true, "");
+        }
+
         row.dataset.timestamp = new Date().getTime();
         saveToLocalStorage();
 
