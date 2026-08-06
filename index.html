@@ -33,6 +33,12 @@
             justify-content: space-between;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
+        }
+        .left-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         /* Style untuk tombol Informasi (Logo i + Teks INFORMASI) */
         .info-container {
@@ -81,7 +87,7 @@
             color: #2d3748;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             z-index: 10;
-            width: 320px;
+            width: 340px;
         }
         .info-popup.show {
             display: block;
@@ -89,6 +95,15 @@
         .info-popup ul {
             margin: 5px 0 0 15px;
             padding: 0;
+        }
+        /* Style untuk Kolom Cari */
+        .search-box {
+            padding: 6px 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 200px;
+            background: #fff;
         }
         /* Style untuk logo kalender di sebelah kanan */
         .calendar-setting {
@@ -211,18 +226,24 @@
 <div class="container">
     <h2>Form Data Rekening & Screenshot Bukti Transaksi</h2>
     <div class="controls">
-        <!-- Tombol Informasi dengan Logo i dan Teks INFORMASI -->
-        <div class="info-container">
-            <button class="info-btn" onclick="toggleInfo(event)" title="Klik untuk informasi">
-                <span class="info-icon">i</span> INFORMASI
-            </button>
-            <div id="infoPopup" class="info-popup">
-                <b>Informasi Penggunaan:</b>
-                <ul>
-                    <li>Input nomor rekening dan gambar maka akan tersimpan secara otomatis.</li>
-                    <li>Data yang sudah di input akan terhapus secara otomatis jika sudah 7 x 24 jam (selama 2 minggu).</li>
-                </ul>
+        <div class="left-controls">
+            <!-- Tombol Informasi dengan Logo i dan Teks INFORMASI -->
+            <div class="info-container">
+                <button class="info-btn" onclick="toggleInfo(event)" title="Klik untuk informasi">
+                    <span class="info-icon">i</span> INFORMASI
+                </button>
+                <div id="infoPopup" class="info-popup">
+                    <b>Informasi Penggunaan:</b>
+                    <ul>
+                        <li>Input nomor rekening dan gambar maka akan tersimpan secara otomatis.</li>
+                        <li>Data yang sudah di input akan terhapus secara otomatis jika sudah 3 x 24 (selama 3 minggu).</li>
+                        <li>Jika ingin melakukan pengecekan gambar yang sudah di simpan dapat di lihat dengan setting tanggal atau input nomor di menu cari.</li>
+                    </ul>
+                </div>
             </div>
+
+            <!-- Kolom Cari berdasarkan nomor rekening atau jenis bank -->
+            <input type="text" id="searchInput" class="search-box" placeholder="🔍 Cari No Rek / Bank..." onkeyup="filterTable()">
         </div>
         
         <!-- Logo/Input Kalender Setting Tanggal di Sebelah Kanan -->
@@ -319,22 +340,51 @@
         }
     }
 
+    function filterTable() {
+        const input = document.getElementById('searchInput');
+        const filter = input.value.toUpperCase();
+        const tbody = document.getElementById('tableBody');
+        const rows = tbody.getElementsByTagName('tr');
+
+        for (let i = 0; i < rows.length; i++) {
+            const rekInput = rows[i].querySelector('.row-rek');
+            const jenisSelect = rows[i].querySelector('.row-jenis');
+            
+            const isLastActiveRow = !rows[i].querySelector('.row-rek').disabled;
+            if (isLastActiveRow) {
+                rows[i].style.display = "";
+                continue;
+            }
+
+            if (rekInput && jenisSelect) {
+                const rekValue = rekInput.value || "";
+                const jenisValue = jenisSelect.value || "";
+                
+                if (rekValue.toUpperCase().indexOf(filter) > -1 || jenisValue.toUpperCase().indexOf(filter) > -1) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        }
+    }
+
     function loadAndCleanData() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
 
         let savedData = JSON.parse(localStorage.getItem('transaksiRekeningData')) || [];
         const now = new Date().getTime();
-        const twoWeeksMs = 14 * 24 * 60 * 60 * 1000;
+        const threeWeeksMs = 21 * 24 * 60 * 60 * 1000; // 3 x 24 (selama 3 minggu / 21 hari)
 
         savedData = savedData.filter(item => {
-            return (now - item.timestamp) < twoWeeksMs;
+            return (now - item.timestamp) < threeWeeksMs;
         });
 
         localStorage.setItem('transaksiRekeningData', JSON.stringify(savedData));
 
         if (savedData.length === 0) {
-            addRow("", "NO REKENING", "-", "", false, null);
+            addRow(getFormattedDate(), "NO REKENING", "-", "", false, null);
         } else {
             savedData.forEach(item => {
                 addRow(item.date, item.rek, item.jenis, item.imgUrl, item.isLocked, item.timestamp);
