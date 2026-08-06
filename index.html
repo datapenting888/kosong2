@@ -34,34 +34,44 @@
             align-items: center;
             gap: 10px;
         }
-        /* Style untuk tombol Informasi (Logo i) */
+        /* Style untuk tombol Informasi (Logo i + Teks INFORMASI) */
         .info-container {
             position: relative;
             display: inline-block;
-            flex-grow: 1;
         }
         .info-btn {
             background-color: #3182ce;
             color: white;
             border: none;
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
+            padding: 6px 12px;
+            border-radius: 4px;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            justify-content: center;
+            gap: 6px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .info-btn:hover {
             background-color: #2b6cb0;
         }
+        .info-icon {
+            width: 18px;
+            height: 18px;
+            background-color: white;
+            color: #3182ce;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
         .info-popup {
             display: none;
             position: absolute;
-            top: 35px;
+            top: 40px;
             left: 0;
             background: #edf2f7;
             border: 1px solid #cbd5e0;
@@ -201,9 +211,11 @@
 <div class="container">
     <h2>Form Data Rekening & Screenshot Bukti Transaksi</h2>
     <div class="controls">
-        <!-- Tombol Informasi dengan Logo i dan Popup Keterangan -->
+        <!-- Tombol Informasi dengan Logo i dan Teks INFORMASI -->
         <div class="info-container">
-            <button class="info-btn" onclick="toggleInfo(event)" title="Klik untuk informasi">i</button>
+            <button class="info-btn" onclick="toggleInfo(event)" title="Klik untuk informasi">
+                <span class="info-icon">i</span> INFORMASI
+            </button>
             <div id="infoPopup" class="info-popup">
                 <b>Informasi Penggunaan:</b>
                 <ul>
@@ -245,9 +257,7 @@
     const bankList = ["DANA", "OVO", "GOPAY", "LINKAJA", "BCA", "BRI", "BNI", "MANDIRI", "JAGO", "MAYBANK", "BSI", "CIMB", "DANAMON", "SEABANK"];
     let customSelectedDate = "";
 
-    // Load data tersimpan saat halaman dibuka, serta bersihkan data > 2 minggu (14 hari / 336 jam)
     window.addEventListener('DOMContentLoaded', () => {
-        // Set tanggal kalender global ke hari ini
         const today = new Date();
         const yyyy = today.getFullYear();
         let mm = today.getMonth() + 1;
@@ -259,14 +269,12 @@
         loadAndCleanData();
     });
 
-    // Toggle Popup Informasi (Logo i)
     function toggleInfo(event) {
         event.stopPropagation();
         const popup = document.getElementById('infoPopup');
         popup.classList.toggle('show');
     }
 
-    // Tutup popup informasi jika klik di luar area
     window.onclick = function(event) {
         const popup = document.getElementById('infoPopup');
         if (!event.target.closest('.info-container') && popup.classList.contains('show')) {
@@ -281,8 +289,8 @@
 
     function updateDefaultDate(input) {
         if (input.value) {
-            const parts = input.value.split('-'); // Format YYYY-MM-DD
-            customSelectedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Ubah ke DD/MM/YYYY
+            const parts = input.value.split('-');
+            customSelectedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
         }
     }
 
@@ -311,21 +319,18 @@
         }
     }
 
-    // Load data dari localStorage dan hapus otomatis jika usia data > 2 minggu (7 x 24 jam x 2 = 336 jam)
     function loadAndCleanData() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
 
         let savedData = JSON.parse(localStorage.getItem('transaksiRekeningData')) || [];
         const now = new Date().getTime();
-        const twoWeeksMs = 14 * 24 * 60 * 60 * 1000; // 7 x 24 jam x 2 (2 minggu)
+        const twoWeeksMs = 14 * 24 * 60 * 60 * 1000;
 
-        // Filter data yang umurnya belum lebih dari 2 minggu
         savedData = savedData.filter(item => {
             return (now - item.timestamp) < twoWeeksMs;
         });
 
-        // Simpan kembali data yang sudah difilter (yang kadaluarsa otomatis terhapus)
         localStorage.setItem('transaksiRekeningData', JSON.stringify(savedData));
 
         if (savedData.length === 0) {
@@ -334,7 +339,6 @@
             savedData.forEach(item => {
                 addRow(item.date, item.rek, item.jenis, item.imgUrl, item.isLocked, item.timestamp);
             });
-            // Selalu sediakan 1 baris kosong baru di bawah untuk input selanjutnya
             addRow(getFormattedDate(), "NO REKENING", "-", "", false, null);
         }
     }
@@ -428,7 +432,7 @@
         const dateInput = row.querySelector('.row-date');
         
         if (rekInput.value === "NO REKENING" || rekInput.value.trim() === "") {
-            alert("Harap masukkan nomor rekening dan pilih jenis bank terlebih dahulu!");
+            alert("Harap masukkan nomor rekening terlebih dahulu!");
             return;
         }
 
@@ -453,11 +457,9 @@
         };
         pasteArea.appendChild(img);
 
-        // Set timestamp saat data diinput & disimpan otomatis
         row.dataset.timestamp = new Date().getTime();
         saveToLocalStorage();
 
-        // Tambah baris baru kosong otomatis di bawahnya
         const tbody = document.getElementById('tableBody');
         const rows = Array.from(tbody.children);
         if (rows[rows.length - 1] === row) {
