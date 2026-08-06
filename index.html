@@ -30,8 +30,9 @@
         .controls {
             margin-bottom: 15px;
             display: flex;
-            gap: 10px;
+            justify-content: space-between;
             align-items: center;
+            gap: 10px;
         }
         .info-text {
             font-size: 13px;
@@ -40,6 +41,26 @@
             padding: 8px 12px;
             border-radius: 4px;
             border-left: 4px solid #3182ce;
+            flex-grow: 1;
+        }
+        /* Style untuk logo kalender di sebelah kanan */
+        .calendar-setting {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #edf2f7;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #2d3748;
+            white-space: nowrap;
+        }
+        .calendar-setting input[type="date"] {
+            padding: 4px;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            font-size: 12px;
+            background: #fff;
         }
         table {
             width: 100%;
@@ -74,7 +95,6 @@
             font-size: 13px;
             background: #fff;
         }
-        /* Style untuk teks samar (placeholder-like) */
         .row-rek.samar {
             color: #a0aec0;
         }
@@ -144,7 +164,13 @@
 <div class="container">
     <h2>Form Data Rekening & Screenshot Bukti Transaksi</h2>
     <div class="controls">
-        <div class="info-text">💡 <b>Tips:</b> Klik kotak nomor rekening, ketik nomor Anda, pilih jenis bank, lalu paste gambar (<b>Ctrl + V</b>) pada kotak screenshot untuk menyimpan & menambah baris baru.</div>
+        <div class="info-text">💡 <b>Tips:</b> Klik kotak nomor rekening, ketik nomor, pilih jenis, lalu paste gambar (<b>Ctrl + V</b>) untuk simpan & tambah baris otomatis.</div>
+        
+        <!-- Logo/Input Kalender Setting Tanggal di Sebelah Kanan Tips -->
+        <div class="calendar-setting">
+            <span>📅 Tanggal:</span>
+            <input type="date" id="globalDateSetting" onchange="updateDefaultDate(this)" title="Pilih tanggal untuk baris berikutnya">
+        </div>
     </div>
 
     <table id="transTable">
@@ -197,8 +223,32 @@
 
 <script>
     const bankList = ["DANA", "OVO", "GOPAY", "LINKAJA", "BCA", "BRI", "BNI", "MANDIRI", "JAGO", "MAYBANK", "BSI", "CIMB", "DANAMON", "SEABANK"];
+    
+    // Variabel untuk menyimpan tanggal custom jika diset melalui logo kalender
+    let customSelectedDate = "";
+
+    // Set nilai awal input kalender pengaturan ke hari ini (YYYY-MM-DD)
+    window.addEventListener('DOMContentLoaded', () => {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        let mm = today.getMonth() + 1;
+        let dd = today.getDate();
+        if (mm < 10) mm = '0' + mm;
+        if (dd < 10) dd = '0' + dd;
+        document.getElementById('globalDateSetting').value = `${yyyy}-${mm}-${dd}`;
+    });
+
+    function updateDefaultDate(input) {
+        if (input.value) {
+            const parts = input.value.split('-'); // Format YYYY-MM-DD
+            customSelectedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Ubah ke DD/MM/YYYY
+        }
+    }
 
     function getFormattedDate() {
+        if (customSelectedDate) {
+            return customSelectedDate;
+        }
         const today = new Date();
         const dd = String(today.getDate()).padStart(2, '0');
         const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -270,7 +320,6 @@
         const jenisSelect = row.querySelector('.row-jenis');
         const dateInput = row.querySelector('.row-date');
         
-        // Jika masih default "NO REKENING", kosongkan atau tandai
         if (rekInput.value === "NO REKENING") {
             rekInput.value = "";
             rekInput.classList.remove("samar");
