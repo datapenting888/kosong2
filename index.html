@@ -450,13 +450,18 @@
       const e = (r[1] || '').trim();
       const f = (r[2] || '').trim();
 
-      // Baris kategori: hanya kolom D terisi (mis. "SALAH RESPON", "FATAL", "DURASI")
-      if(d && !e && !f){
+      if(!d && !e && !f) return; // baris kosong pemisah, lewati
+
+      // Kolom D terisi = mulai kategori baru. Kadang kategori berdiri sendiri
+      // (SALAH RESPON, FATAL, DURASI), kadang digabung dengan poin pertamanya
+      // di baris yang sama (SS ADMIN + TURNOVER, SPAM + ..., dst) — keduanya ditangani di sini.
+      if(d){
         current = { title: d, items: [] };
         groups.push(current);
+        if(e) current.items.push({ point: e, note: f });
         return;
       }
-      // Baris poin kesalahan: kolom E terisi, F opsional berisi keterangan
+      // Baris lanjutan: kolom D kosong tapi E terisi = poin di bawah kategori aktif
       if(e){
         if(!current){ current = { title:'', items:[] }; groups.push(current); }
         current.items.push({ point: e, note: f });
