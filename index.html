@@ -429,15 +429,89 @@
     `;
   }
 
+  // ---- Untuk tab REFERENSI (mis. "poin-poin kesalahan lc new"): bukan log Nama/Link/Status,
+  //      tapi daftar Kategori (D) > Poin Kesalahan (E) > Keterangan (F) ----
+  async function fetchReferenceData(siteName){
+    if(SITE_DATA[siteName]) return SITE_DATA[siteName];
+    const range = `'${siteName.replace(/'/g,"''")}'!${DATA_RANGE}`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
+    const res = await fetch(url);
+    if(!res.ok){
+      const body = await res.text().catch(()=> '');
+      throw new Error(`HTTP ${res.status} ${body.slice(0,160)}`);
+    }
+    const json = await res.json();
+    const rows = json.values || [];
+
+    const groups = [];
+    let current = null;
+    rows.forEach(r => {
+      const d = (r[0] || '').trim();
+      const e = (r[1] || '').trim();
+      const f = (r[2] || '').trim();
+
+      // Baris kategori: hanya kolom D terisi (mis. "SALAH RESPON", "FATAL", "DURASI")
+      if(d && !e && !f){
+        current = { title: d, items: [] };
+        groups.push(current);
+        return;
+      }
+      // Baris poin kesalahan: kolom E terisi, F opsional berisi keterangan
+      if(e){
+        if(!current){ current = { title:'', items:[] }; groups.push(current); }
+        current.items.push({ point: e, note: f });
+      }
+    });
+
+    SITE_DATA[siteName] = groups;
+    return groups;
+  }
+
+  function renderReferenceList(groups, siteName){
+    if(!groups.length){
+      return `<div class="empty">Belum ada data di tab <b>${siteName}</b>.</div>`;
+    }
+    let html = '';
+    groups.forEach(g => {
+      if(!g.items.length) return; // lewati kategori kosong (mis. judul sheet di baris pertama)
+      html += `<div class="date-group">`;
+      if(g.title) html += `<div class="date-head">${g.title}</div>`;
+      html += `<table><tbody>`;
+      g.items.forEach(it => {
+        const noteHtml = it.note ? it.note.replace(/\n/g,'<br>') : '—';
+        html += `<tr>
+          <td class="name" style="width:34%; white-space:normal; max-width:none;">${it.point}</td>
+          <td style="color:#b9b6ac; white-space:normal;">${noteHtml}</td>
+        </tr>`;
+      });
+      html += `</tbody></table></div>`;
+    });
+    return html || `<div class="empty">Belum ada data di tab <b>${siteName}</b>.</div>`;
+  }
+
   async function selectSite(siteName){
     activeSite = siteName;
     el('activeSiteTitle').textContent = siteName;
     renderSiteList(el('siteSearch').value);
     el('statRow').innerHTML = '';
     el('staffPanel').innerHTML = '';
-    const showStaffPanel = !STAFF_PANEL_EXCLUDE.includes(siteName.trim().toLowerCase());
-    el('staffPanel').style.display = showStaffPanel ? '' : 'none';
+    const isReference = STAFF_PANEL_EXCLUDE.includes(siteName.trim().toLowerCase());
+    el('staffPanel').style.display = isReference ? 'none' : '';
     el('resultPanel').innerHTML = `<div class="empty"><div class="spin"></div>Menarik data dari tab "${siteName}"...</div>`;
+
+    // ---- Tab referensi (bukan log Nama/Link/Status) ----
+    if(isReference){
+      try{
+        const groups = await fetchReferenceData(siteName);
+        el('resultPanel').innerHTML = renderReferenceList(groups, siteName);
+      } catch(err){
+        console.error(err);
+        el('resultPanel').innerHTML = `<div class="empty">
+          Gagal menarik data dari tab <b>${siteName}</b>.<br>${err.message}
+        </div>`;
+      }
+      return;
+    }
 
     try{
       const groups = await fetchSiteData(siteName);
@@ -452,7 +526,7 @@
       }
 
       renderStats(allRecords);
-      if(showStaffPanel) renderStaffPanel(allRecords);
+      renderStaffPanel(allRecords);
       let html = '';
       Object.entries(groups).forEach(([date, records]) => {
         if(!records.length) return;
