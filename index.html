@@ -138,7 +138,7 @@
   }
   .date-head::before{ content:'▸'; font-size:10px; }
 
-  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; table-layout:fixed; }
   thead.col-head th{
     text-align:left; padding:8px 20px; font-size:10.5px; letter-spacing:.08em;
     text-transform:uppercase; color:var(--text-dim); font-weight:600; border-bottom:1px solid #202227;
@@ -148,8 +148,8 @@
   tbody tr:last-child td{ border-bottom:none; }
   td.name{ font-weight:600; color:#f0ede4; }
   td.name .name-txt{
-    display:inline-block; max-width:15ch; overflow:hidden; text-overflow:ellipsis;
-    white-space:nowrap; vertical-align:bottom;
+    display:block; max-width:15ch; overflow:hidden; text-overflow:ellipsis;
+    white-space:nowrap;
   }
   /* Desktop lebar: tampilkan Nama / ID secara penuh, tidak terpotong */
   @media (min-width:1400px){
