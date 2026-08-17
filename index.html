@@ -273,22 +273,24 @@
     const groups = {};
     let currentDate = null;
     rows.forEach(r => {
-      const d = (r[0] || '').trim();
       const name = (r[0] || '').trim();
-      const link = (r[1] || '').trim();
+      const linkOrDate = (r[1] || '').trim();
       const status = (r[2] || '').trim();
 
-      if(isDateLike(d) && !link && !status){
-        currentDate = d;
+      // Baris pemisah tanggal: nama & status kosong, kolom link berisi tanggal (mis. 01/07/2026)
+      if(!name && !status && isDateLike(linkOrDate)){
+        currentDate = linkOrDate;
         if(!groups[currentDate]) groups[currentDate] = [];
         return;
       }
-      if(name && (link || status)){
+      // Baris data biasa
+      if(name && (linkOrDate || status)){
         if(!currentDate){ currentDate = '(Tanpa tanggal)'; }
         if(!groups[currentDate]) groups[currentDate] = [];
         groups[currentDate].push({
-          name, link,
-          note: status || '—',
+          name,
+          link: isUrlLike(linkOrDate) ? linkOrDate : '',
+          note: status || (isUrlLike(linkOrDate) ? '—' : linkOrDate) || '—',
           status: statusFromNote(status)
         });
       }
