@@ -110,7 +110,9 @@
     font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--gold-1); font-weight:700;
   }
   .staff-panel .stf-head span:first-child{ flex:1; border-right:1px solid rgba(255,255,255,0.2); padding-right:8px; }
-  .staff-panel .stf-head span:last-child{ width:56px; text-align:center; padding-left:8px; }
+  .staff-panel .stf-head span:last-child{
+    width:64px; flex-shrink:0; text-align:center; padding-left:6px; line-height:1.25; white-space:normal;
+  }
   .staff-panel .stf-row{
     display:flex; align-items:stretch; padding:0; border-bottom:1px solid rgba(255,255,255,0.16);
     font-size:11.5px; color:#dedbd0;
@@ -119,11 +121,11 @@
   .staff-panel .stf-row:last-child{ border-bottom:none; }
   .staff-panel .stf-body{ max-height:340px; overflow-y:auto; }
   .staff-panel .stf-row span:first-child{
-    flex:1; padding:8px 8px 8px 14px; border-right:1px solid rgba(255,255,255,0.16);
+    flex:1; padding:8px 8px 8px 14px; border-right:1px solid rgba(255,255,255,0.16); word-break:break-word;
   }
   .staff-panel .stf-count{
-    width:56px; text-align:center; font-weight:700; color:var(--text-dim); font-family:'Georgia', serif;
-    padding:8px 0; display:flex; align-items:center; justify-content:center;
+    width:64px; flex-shrink:0; text-align:center; font-weight:700; color:var(--text-dim); font-family:'Georgia', serif;
+    padding:8px 4px; display:flex; align-items:center; justify-content:center;
   }
   .staff-panel .stf-count.bad{ color:var(--orange); }
 
@@ -145,7 +147,7 @@
   tbody tr:hover{ background:rgba(243,201,105,0.05); }
   tbody tr:last-child td{ border-bottom:none; }
   td.name{ font-weight:600; color:#f0ede4; white-space:nowrap; }
-  td.link a{ color:#7fb0d9; text-decoration:none; font-size:12.5px; }
+  td.link a{ color:#7fb0d9; text-decoration:none; font-size:12.5px; word-break:break-all; }
   td.link a:hover{ text-decoration:underline; }
 
   .status-pill{
@@ -170,18 +172,50 @@
   }
   @keyframes spin{ to{ transform:rotate(360deg); } }
 
+  /* ===== TABLET / MOBILE (<=820px) ===== */
   @media (max-width:820px){
+    body{ overflow-x:hidden; }
     .app{ flex-direction:column; }
-    .sidebar{ width:100%; height:auto; position:relative; }
-    .site-select-wrap{ max-height:none; }
-    main{ padding:0 20px 20px; }
-    .main-sticky{ padding-top:20px; }
+    .sidebar{ width:100%; height:auto; position:relative; border-right:none; border-bottom:1px solid var(--line); }
+    .sidebar-body{ flex:none; }
+    .staff-panel{ margin:0 14px 14px; }
+    .staff-panel .stf-body{ max-height:260px; }
+    main{ padding:0 16px 24px; }
+    .main-sticky{ padding-top:16px; padding-bottom:2px; }
+    .main-top h2{ font-size:21px; }
+    .stat-row{ gap:10px; margin-bottom:18px; }
+    .stat{ padding:12px 14px; }
+    .stat .value{ font-size:20px; }
+    .date-head{ padding:9px 16px; }
+
     table, thead, tbody, th, td, tr{ display:block; }
     thead.col-head{ display:none; }
     tbody tr{ padding:12px 16px; border-bottom:1px solid var(--line); }
-    td{ padding:3px 0 !important; border:none !important; }
+    td{ padding:5px 0 !important; border:none !important; }
     td.name{ font-size:14px; }
+    td.link, td:last-child{ display:flex; align-items:center; gap:8px; }
+    td.link a{ flex:1; min-width:0; }
+    .status-pill{ white-space:normal; }
+    td[data-label]::before{
+      content:attr(data-label); flex-shrink:0; width:64px;
+      font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-dim);
+    }
+    td.name::before{ display:none; }
   }
+
+  /* ===== PHONE (<=480px) ===== */
+  @media (max-width:480px){
+    .sidebar-head{ padding:18px 14px 12px; }
+    .sidebar-head h1{ font-size:18px; }
+    .sidebar-search, .site-select-wrap{ padding:10px 14px; }
+    .staff-panel{ margin:0 10px 10px; }
+    .staff-panel .stf-row span:first-child{ padding:7px 6px 7px 12px; font-size:11px; }
+    .staff-panel .stf-count{ width:52px; font-size:11px; }
+    main{ padding:0 12px 20px; }
+    .stat-row{ grid-template-columns:1fr 1fr; }
+    td[data-label]::before{ width:52px; }
+  }
+
   ::-webkit-scrollbar{ width:9px; }
   ::-webkit-scrollbar-thumb{ background:#2c2e34; border-radius:6px; }
 </style>
@@ -416,9 +450,9 @@
           const meta = statusMeta(r.status);
           const linkHtml = r.link ? `<a href="${r.link}" target="_blank" rel="noopener">${r.link}</a>` : '—';
           html += `<tr>
-            <td class="name">${r.name}</td>
-            <td class="link">${linkHtml}</td>
-            <td><span class="status-pill ${meta.cls}"><span class="dot"></span>${r.note}</span></td>
+            <td class="name" data-label="Nama / ID">${r.name}</td>
+            <td class="link" data-label="Link">${linkHtml}</td>
+            <td data-label="Status"><span class="status-pill ${meta.cls}"><span class="dot"></span>${r.note}</span></td>
           </tr>`;
         });
         html += `</tbody></table></div>`;
