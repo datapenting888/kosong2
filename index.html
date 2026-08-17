@@ -112,6 +112,8 @@
   .stat.warn .value{ color:var(--orange); }
   .stat.bad .value{ color:var(--red); }
   .stat.good .value{ color:var(--gold-1); }
+  .stat.note::before{ background:linear-gradient(180deg, var(--amber), #6f6224); }
+  .stat.note .value{ color:var(--amber); }
 
   .panel{ background:var(--bg-panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
 
@@ -252,10 +254,8 @@
   }
   function statusFromNote(note){
     const n = (note||'').toLowerCase();
-    if(n.includes('fatal')) return 'fatal';
-    if(n.includes('tidak respon') || n.includes('tdk respon')) return 'noresp';
-    if(n.includes('note') || n.includes('tidak melakukan') || n.includes('tidak teliti')) return 'note';
-    return 'neutral';
+    if(n.includes('note')) return 'note';
+    return 'noresp';
   }
 
   async function fetchSiteData(siteName){
@@ -322,23 +322,19 @@
 
   function statusMeta(status){
     switch(status){
-      case 'fatal': return { cls:'status-fatal' };
-      case 'noresp': return { cls:'status-noresp' };
       case 'note': return { cls:'status-note' };
-      default: return { cls:'status-neutral' };
+      default: return { cls:'status-noresp' };
     }
   }
 
   function renderStats(records){
     const total = records.length;
-    const fatal = records.filter(r=>r.status==='fatal').length;
     const noresp = records.filter(r=>r.status==='noresp').length;
     const note = records.filter(r=>r.status==='note').length;
     el('statRow').innerHTML = `
       <div class="stat"><div class="label">Total Laporan</div><div class="value">${total}</div></div>
-      <div class="stat bad"><div class="label">Fatal</div><div class="value">${fatal}</div></div>
       <div class="stat warn"><div class="label">Tidak Respon</div><div class="value">${noresp}</div></div>
-      <div class="stat"><div class="label">Perlu Ditinjau</div><div class="value">${note}</div></div>
+      <div class="stat note"><div class="label">Note</div><div class="value">${note}</div></div>
     `;
   }
 
