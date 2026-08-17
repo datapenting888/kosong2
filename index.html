@@ -146,14 +146,14 @@
   tbody td{ padding:10px 20px; border-bottom:1px solid #1c1e23; color:#dedbd0; vertical-align:middle; }
   tbody tr:hover{ background:rgba(243,201,105,0.05); }
   tbody tr:last-child td{ border-bottom:none; }
-  td.name{
-    font-weight:600; color:#f0ede4;
+  td.name{ font-weight:600; color:#f0ede4; }
+  td.name .name-txt{
     display:inline-block; max-width:15ch; overflow:hidden; text-overflow:ellipsis;
     white-space:nowrap; vertical-align:bottom;
   }
   /* Desktop lebar: tampilkan Nama / ID secara penuh, tidak terpotong */
   @media (min-width:1400px){
-    td.name{ max-width:none; overflow:visible; text-overflow:clip; }
+    td.name .name-txt{ max-width:none; overflow:visible; text-overflow:clip; }
   }
   td.link a{
     color:#7fb0d9; text-decoration:none; font-size:12.5px;
@@ -204,8 +204,9 @@
     thead.col-head{ display:none; }
     tbody tr{ padding:12px 16px; border-bottom:1px solid var(--line); }
     td{ padding:5px 0 !important; border:none !important; }
-    td.name{
-      font-size:14px; display:block; max-width:none; overflow:visible;
+    td.name{ font-size:14px; }
+    td.name .name-txt{
+      display:block; max-width:none; overflow:visible;
       text-overflow:clip; white-space:normal; word-break:break-word;
     }
     td.link, td:last-child{ display:flex; align-items:center; gap:8px; }
@@ -468,7 +469,7 @@
           const meta = statusMeta(r.status);
           const linkHtml = r.link ? `<a href="${r.link}" target="_blank" rel="noopener" title="${r.link}">${r.link}</a>` : '—';
           html += `<tr>
-            <td class="name" data-label="Nama / ID" title="${r.name}">${r.name}</td>
+            <td class="name" data-label="Nama / ID"><span class="name-txt" title="${r.name}">${r.name}</span></td>
             <td class="link" data-label="Link">${linkHtml}</td>
             <td data-label="Status"><span class="status-pill ${meta.cls}"><span class="dot"></span>${r.note}</span></td>
           </tr>`;
