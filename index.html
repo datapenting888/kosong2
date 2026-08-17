@@ -67,14 +67,16 @@
   }
   .site-select-wrap select:focus{ border-color:var(--gold-2); }
   .site-select-wrap select option{ background:#101115; color:var(--text); }
-  .site-select-hint{ margin-top:10px; font-size:11.5px; color:var(--text-dim); }
   .sidebar-foot{
     padding:14px 18px; border-top:1px solid var(--line);
     font-size:11px; color:var(--text-dim);
   }
 
   /* ===== MAIN ===== */
-  main{ flex:1; padding:28px 32px 60px; min-width:0; }
+  main{ flex:1; padding:0 32px 60px; min-width:0; }
+  .main-sticky{
+    position:sticky; top:0; z-index:8; background:var(--bg); padding-top:28px; padding-bottom:4px;
+  }
   .main-top{
     display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap;
     gap:16px; margin-bottom:22px;
@@ -112,22 +114,26 @@
 
   .panel{ background:var(--bg-panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
 
-  .staff-panel{ margin:0 16px 16px; }
+  .staff-panel{ margin:0 16px 16px; border:1px solid rgba(255,255,255,0.28); }
   .staff-panel .stf-head{
-    display:flex; background:#111318; padding:10px 14px; border-bottom:1px solid var(--line);
+    display:flex; background:#111318; padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.28);
     font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--gold-1); font-weight:700;
   }
-  .staff-panel .stf-head span:first-child{ flex:1; }
-  .staff-panel .stf-head span:last-child{ width:56px; text-align:center; }
+  .staff-panel .stf-head span:first-child{ flex:1; border-right:1px solid rgba(255,255,255,0.2); padding-right:8px; }
+  .staff-panel .stf-head span:last-child{ width:56px; text-align:center; padding-left:8px; }
   .staff-panel .stf-row{
-    display:flex; align-items:center; padding:8px 14px; border-bottom:1px solid #1c1e23;
+    display:flex; align-items:stretch; padding:0; border-bottom:1px solid rgba(255,255,255,0.16);
     font-size:11.5px; color:#dedbd0;
   }
   .staff-panel .stf-row:hover{ background:rgba(243,201,105,0.05); }
   .staff-panel .stf-row:last-child{ border-bottom:none; }
-  .staff-panel .stf-row span:first-child{ flex:1; padding-right:6px; }
+  .staff-panel .stf-body{ max-height:340px; overflow-y:auto; }
+  .staff-panel .stf-row span:first-child{
+    flex:1; padding:8px 8px 8px 14px; border-right:1px solid rgba(255,255,255,0.16);
+  }
   .staff-panel .stf-count{
     width:56px; text-align:center; font-weight:700; color:var(--text-dim); font-family:'Georgia', serif;
+    padding:8px 0; display:flex; align-items:center; justify-content:center;
   }
   .staff-panel .stf-count.bad{ color:var(--orange); }
 
@@ -178,7 +184,8 @@
     .app{ flex-direction:column; }
     .sidebar{ width:100%; height:auto; position:relative; }
     .site-select-wrap{ max-height:none; }
-    main{ padding:20px; }
+    main{ padding:0 20px 20px; }
+    .main-sticky{ padding-top:20px; }
     table, thead, tbody, th, td, tr{ display:block; }
     thead.col-head{ display:none; }
     tbody tr{ padding:12px 16px; border-bottom:1px solid var(--line); }
@@ -205,7 +212,6 @@
         <select id="siteSelect">
           <option>Memuat daftar situs dari spreadsheet...</option>
         </select>
-        <div class="site-select-hint">Pilih situs untuk menarik data langsung dari sheet-nya</div>
       </div>
       <div class="panel staff-panel" id="staffPanel">
         <div class="empty" style="padding:24px;">—</div>
@@ -214,18 +220,20 @@
   </aside>
 
   <main>
-    <div class="main-top">
-      <div>
-        <h2 id="activeSiteTitle">—</h2>
-        <div class="sub" id="activeSub">Log pengecekan &amp; respon spam link</div>
+    <div class="main-sticky">
+      <div class="main-top">
+        <div>
+          <h2 id="activeSiteTitle">—</h2>
+          <div class="sub" id="activeSub">Log pengecekan &amp; respon spam link</div>
+        </div>
+        <div class="toolbar">
+          <button id="refreshBtn">⟳ Refresh</button>
+          <button class="primary" id="exportBtn">⬇ Export CSV</button>
+        </div>
       </div>
-      <div class="toolbar">
-        <button id="refreshBtn">⟳ Refresh</button>
-        <button class="primary" id="exportBtn">⬇ Export CSV</button>
-      </div>
-    </div>
 
-    <div class="stat-row" id="statRow"></div>
+      <div class="stat-row" id="statRow"></div>
+    </div>
 
     <div class="panel" id="resultPanel">
       <div class="empty"><div class="spin"></div>Menghubungkan ke spreadsheet...</div>
@@ -377,7 +385,7 @@
       </div>`).join('');
     el('staffPanel').innerHTML = `
       <div class="stf-head"><span>Nama Staff</span><span>Total Kesalahan</span></div>
-      ${rows || '<div class="empty" style="padding:24px;">Belum ada data.</div>'}
+      <div class="stf-body">${rows || '<div class="empty" style="padding:24px;">Belum ada data.</div>'}</div>
     `;
   }
 
