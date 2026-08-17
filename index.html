@@ -474,13 +474,20 @@
     let html = '';
     groups.forEach(g => {
       if(!g.items.length) return; // lewati kategori kosong (mis. judul sheet di baris pertama)
-      html += `<div class="date-group">`;
-      if(g.title) html += `<div class="date-head">${g.title}</div>`;
-      html += `<table><tbody>`;
-      g.items.forEach(it => {
+      html += `<div class="date-group">
+        <table>
+          <thead class="col-head"><tr>
+            <th style="width:16%;">Kategori</th>
+            <th style="width:32%;">Poin Kesalahan</th>
+            <th>Keterangan</th>
+          </tr></thead>
+          <tbody>`;
+      g.items.forEach((it, idx) => {
         const noteHtml = it.note ? it.note.replace(/\n/g,'<br>') : '—';
+        const catHtml = idx === 0 ? (g.title || '—') : '';
         html += `<tr>
-          <td class="name" style="width:34%; white-space:normal; max-width:none;">${it.point}</td>
+          <td class="name" style="white-space:normal; max-width:none; color:var(--gold-1);">${catHtml}</td>
+          <td style="white-space:normal;">${it.point}</td>
           <td style="color:#b9b6ac; white-space:normal;">${noteHtml}</td>
         </tr>`;
       });
