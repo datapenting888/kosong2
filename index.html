@@ -117,6 +117,32 @@
 
   .panel{ background:var(--bg-panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
 
+  .content-row{ display:flex; gap:18px; align-items:flex-start; }
+  .content-row #resultPanel{ flex:1; min-width:0; }
+  .staff-panel{ width:300px; flex-shrink:0; }
+  .staff-panel .stf-head{
+    display:flex; background:#111318; padding:11px 20px; border-bottom:1px solid var(--line);
+    font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--gold-1); font-weight:700;
+  }
+  .staff-panel .stf-head span:first-child{ flex:1; }
+  .staff-panel .stf-head span:last-child{ width:70px; text-align:center; }
+  .staff-panel .stf-row{
+    display:flex; align-items:center; padding:10px 20px; border-bottom:1px solid #1c1e23;
+    font-size:12.5px; color:#dedbd0;
+  }
+  .staff-panel .stf-row:hover{ background:rgba(243,201,105,0.05); }
+  .staff-panel .stf-row:last-child{ border-bottom:none; }
+  .staff-panel .stf-row span:first-child{ flex:1; padding-right:8px; }
+  .staff-panel .stf-count{
+    width:70px; text-align:center; font-weight:700; color:var(--text-dim); font-family:'Georgia', serif;
+  }
+  .staff-panel .stf-count.bad{ color:var(--orange); }
+
+  @media (max-width:1100px){
+    .content-row{ flex-direction:column; }
+    .staff-panel{ width:100%; }
+  }
+
   .date-group{ border-bottom:1px solid var(--line); }
   .date-group:last-child{ border-bottom:none; }
   .date-head{
@@ -206,8 +232,13 @@
 
     <div class="stat-row" id="statRow"></div>
 
-    <div class="panel" id="resultPanel">
-      <div class="empty"><div class="spin"></div>Menghubungkan ke spreadsheet...</div>
+    <div class="content-row">
+      <div class="panel" id="resultPanel">
+        <div class="empty"><div class="spin"></div>Menghubungkan ke spreadsheet...</div>
+      </div>
+      <div class="panel staff-panel" id="staffPanel">
+        <div class="empty" style="padding:24px;">—</div>
+      </div>
     </div>
   </main>
 
@@ -338,11 +369,34 @@
     `;
   }
 
+  // ---- Rekap "Total Kesalahan" per nama staff = jumlah status yang BUKAN "note" ----
+  function aggregateStaff(records){
+    const map = new Map();
+    records.forEach(r => {
+      if(!map.has(r.name)) map.set(r.name, 0);
+      if(r.status === 'noresp') map.set(r.name, map.get(r.name) + 1);
+    });
+    return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
+  }
+
+  function renderStaffPanel(records){
+    const staff = aggregateStaff(records);
+    const rows = staff.map(s => `<div class="stf-row">
+        <span>${s.name}</span>
+        <span class="stf-count ${s.count > 0 ? 'bad' : ''}">${s.count}</span>
+      </div>`).join('');
+    el('staffPanel').innerHTML = `
+      <div class="stf-head"><span>Nama Staff</span><span>Total Kesalahan</span></div>
+      ${rows || '<div class="empty" style="padding:24px;">Belum ada data.</div>'}
+    `;
+  }
+
   async function selectSite(siteName){
     activeSite = siteName;
     el('activeSiteTitle').textContent = siteName;
     renderSiteList(el('siteSearch').value);
     el('statRow').innerHTML = '';
+    el('staffPanel').innerHTML = '';
     el('resultPanel').innerHTML = `<div class="empty"><div class="spin"></div>Menarik data dari tab "${siteName}"...</div>`;
 
     try{
@@ -352,11 +406,13 @@
 
       if(!allRecords.length){
         el('statRow').innerHTML = '';
+        el('staffPanel').innerHTML = '';
         el('resultPanel').innerHTML = `<div class="empty">Belum ada data log di tab <b>${siteName}</b>,<br>atau struktur kolomnya berbeda dari D:E:F.</div>`;
         return;
       }
 
       renderStats(allRecords);
+      renderStaffPanel(allRecords);
       let html = '';
       Object.entries(groups).forEach(([date, records]) => {
         if(!records.length) return;
@@ -384,6 +440,7 @@
     } catch(err){
       console.error(err);
       el('statRow').innerHTML = '';
+      el('staffPanel').innerHTML = '';
       el('resultPanel').innerHTML = `<div class="empty">
         Gagal menarik data dari tab <b>${siteName}</b>.<br>${err.message}<br><br>
         <span style="font-size:12px;">Pastikan nama tab di spreadsheet persis sama, sheet dapat diakses publik
