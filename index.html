@@ -147,7 +147,11 @@
   tbody tr:hover{ background:rgba(243,201,105,0.05); }
   tbody tr:last-child td{ border-bottom:none; }
   td.name{ font-weight:600; color:#f0ede4; white-space:nowrap; }
-  td.link a{ color:#7fb0d9; text-decoration:none; font-size:12.5px; white-space:normal; overflow-wrap:break-word; word-break:normal; }
+  td.link a{
+    color:#7fb0d9; text-decoration:none; font-size:12.5px;
+    display:inline-block; max-width:15ch; overflow:hidden; text-overflow:ellipsis;
+    white-space:nowrap; vertical-align:bottom;
+  }
   td.link a:hover{ text-decoration:underline; }
 
   .status-pill{
@@ -194,7 +198,10 @@
     td{ padding:5px 0 !important; border:none !important; }
     td.name{ font-size:14px; }
     td.link, td:last-child{ display:flex; align-items:center; gap:8px; }
-    td.link a{ flex:1; min-width:0; }
+    td.link a{
+      flex:1; min-width:0; max-width:none; display:block;
+      overflow:visible; text-overflow:clip; white-space:normal; overflow-wrap:break-word;
+    }
     .status-pill{ white-space:normal; }
     td[data-label]::before{
       content:attr(data-label); flex-shrink:0; width:64px;
@@ -448,7 +455,7 @@
             <tbody>`;
         records.forEach(r => {
           const meta = statusMeta(r.status);
-          const linkHtml = r.link ? `<a href="${r.link}" target="_blank" rel="noopener">${r.link}</a>` : '—';
+          const linkHtml = r.link ? `<a href="${r.link}" target="_blank" rel="noopener" title="${r.link}">${r.link}</a>` : '—';
           html += `<tr>
             <td class="name" data-label="Nama / ID">${r.name}</td>
             <td class="link" data-label="Link">${linkHtml}</td>
