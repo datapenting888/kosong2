@@ -56,7 +56,8 @@
     padding:9px 11px; border-radius:7px; font-size:13px; outline:none;
   }
   .sidebar-search input:focus{ border-color:var(--gold-2); }
-  .site-select-wrap{ flex:1; overflow-y:auto; padding:14px 16px; }
+  .sidebar-body{ flex:1; overflow-y:auto; display:flex; flex-direction:column; }
+  .site-select-wrap{ padding:14px 16px; }
   .site-select-wrap select{
     width:100%; background:#101115; border:1px solid var(--line); color:var(--text);
     padding:11px 12px; border-radius:8px; font-size:13.5px; outline:none; cursor:pointer;
@@ -111,31 +112,24 @@
 
   .panel{ background:var(--bg-panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
 
-  .content-row{ display:flex; gap:18px; align-items:flex-start; }
-  .content-row #resultPanel{ flex:1; min-width:0; }
-  .staff-panel{ width:300px; flex-shrink:0; }
+  .staff-panel{ margin:0 16px 16px; }
   .staff-panel .stf-head{
-    display:flex; background:#111318; padding:11px 20px; border-bottom:1px solid var(--line);
-    font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--gold-1); font-weight:700;
+    display:flex; background:#111318; padding:10px 14px; border-bottom:1px solid var(--line);
+    font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--gold-1); font-weight:700;
   }
   .staff-panel .stf-head span:first-child{ flex:1; }
-  .staff-panel .stf-head span:last-child{ width:70px; text-align:center; }
+  .staff-panel .stf-head span:last-child{ width:56px; text-align:center; }
   .staff-panel .stf-row{
-    display:flex; align-items:center; padding:10px 20px; border-bottom:1px solid #1c1e23;
-    font-size:12.5px; color:#dedbd0;
+    display:flex; align-items:center; padding:8px 14px; border-bottom:1px solid #1c1e23;
+    font-size:11.5px; color:#dedbd0;
   }
   .staff-panel .stf-row:hover{ background:rgba(243,201,105,0.05); }
   .staff-panel .stf-row:last-child{ border-bottom:none; }
-  .staff-panel .stf-row span:first-child{ flex:1; padding-right:8px; }
+  .staff-panel .stf-row span:first-child{ flex:1; padding-right:6px; }
   .staff-panel .stf-count{
-    width:70px; text-align:center; font-weight:700; color:var(--text-dim); font-family:'Georgia', serif;
+    width:56px; text-align:center; font-weight:700; color:var(--text-dim); font-family:'Georgia', serif;
   }
   .staff-panel .stf-count.bad{ color:var(--orange); }
-
-  @media (max-width:1100px){
-    .content-row{ flex-direction:column; }
-    .staff-panel{ width:100%; }
-  }
 
   .date-group{ border-bottom:1px solid var(--line); }
   .date-group:last-child{ border-bottom:none; }
@@ -203,14 +197,19 @@
       <p class="eyebrow"><span class="live-dot" id="liveDot"></span> Arsip Report · Live</p>
       <h1>DASHBOARD</h1>
     </div>
-    <div class="sidebar-search">
-      <input id="siteSearch" type="text" placeholder="Cari situs...">
-    </div>
-    <div class="site-select-wrap">
-      <select id="siteSelect">
-        <option>Memuat daftar situs dari spreadsheet...</option>
-      </select>
-      <div class="site-select-hint">Pilih situs untuk menarik data langsung dari sheet-nya</div>
+    <div class="sidebar-body">
+      <div class="sidebar-search">
+        <input id="siteSearch" type="text" placeholder="Cari situs...">
+      </div>
+      <div class="site-select-wrap">
+        <select id="siteSelect">
+          <option>Memuat daftar situs dari spreadsheet...</option>
+        </select>
+        <div class="site-select-hint">Pilih situs untuk menarik data langsung dari sheet-nya</div>
+      </div>
+      <div class="panel staff-panel" id="staffPanel">
+        <div class="empty" style="padding:24px;">—</div>
+      </div>
     </div>
   </aside>
 
@@ -228,13 +227,8 @@
 
     <div class="stat-row" id="statRow"></div>
 
-    <div class="content-row">
-      <div class="panel" id="resultPanel">
-        <div class="empty"><div class="spin"></div>Menghubungkan ke spreadsheet...</div>
-      </div>
-      <div class="panel staff-panel" id="staffPanel">
-        <div class="empty" style="padding:24px;">—</div>
-      </div>
+    <div class="panel" id="resultPanel">
+      <div class="empty"><div class="spin"></div>Menghubungkan ke spreadsheet...</div>
     </div>
   </main>
 
