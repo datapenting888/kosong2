@@ -236,6 +236,8 @@
   // Kolom tempat data log berada di tiap tab/sheet (D=Nama, E=Link, F=Status),
   // sesuai posisi kolom di spreadsheet ARSIP kamu. Ubah di sini kalau posisinya beda.
   const DATA_RANGE = "D1:F2000";
+  // Nama tab yang BUKAN situs (halaman rekap/poin), staff-panel disembunyikan untuk tab ini
+  const STAFF_PANEL_EXCLUDE = ["poin-poin kesalahan lc new", "total kesalahan"];
 
   const el = id => document.getElementById(id);
   let SHEET_TABS = [];              // daftar nama tab, urut sesuai spreadsheet
@@ -380,6 +382,8 @@
     renderSiteList(el('siteSearch').value);
     el('statRow').innerHTML = '';
     el('staffPanel').innerHTML = '';
+    const showStaffPanel = !STAFF_PANEL_EXCLUDE.includes(siteName.trim().toLowerCase());
+    el('staffPanel').style.display = showStaffPanel ? '' : 'none';
     el('resultPanel').innerHTML = `<div class="empty"><div class="spin"></div>Menarik data dari tab "${siteName}"...</div>`;
 
     try{
@@ -395,7 +399,7 @@
       }
 
       renderStats(allRecords);
-      renderStaffPanel(allRecords);
+      if(showStaffPanel) renderStaffPanel(allRecords);
       let html = '';
       Object.entries(groups).forEach(([date, records]) => {
         if(!records.length) return;
