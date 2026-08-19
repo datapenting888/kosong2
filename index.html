@@ -625,10 +625,10 @@
       renderStats(allRecords);
       renderStaffPanel(allRecords);
       let html = '';
-      const dateEntries = Object.entries(groups).filter(([, records]) => records.length);
+      const dateEntries = Object.entries(groups).filter(([, records]) => records.length).reverse();
       dateEntries.forEach(([date, records], idx) => {
-        const isLast = idx === dateEntries.length - 1;
-        html += `<div class="date-group log-group${isLast ? ' open' : ''}">
+        const isLatest = idx === 0;
+        html += `<div class="date-group log-group${isLatest ? ' open' : ''}">
           <div class="date-head">${date}</div>
           <table>
             <thead class="col-head"><tr>
