@@ -166,9 +166,12 @@
   .date-head{
     background:#111318; padding:10px 20px; font-size:12px; letter-spacing:.08em;
     color:var(--gold-1); text-transform:uppercase; font-weight:600;
-    display:flex; align-items:center; gap:8px;
+    display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none;
   }
-  .date-head::before{ content:'▸'; font-size:10px; }
+  .date-head:hover{ background:#15171c; }
+  .date-head::before{ content:'▸'; font-size:10px; transition:transform .15s ease; display:inline-block; }
+  .log-group.open .date-head::before{ transform:rotate(90deg); }
+  .log-group:not(.open) table{ display:none !important; }
 
   table{ width:100%; border-collapse:collapse; font-size:13.5px; table-layout:fixed; }
   thead.col-head th{
@@ -622,9 +625,10 @@
       renderStats(allRecords);
       renderStaffPanel(allRecords);
       let html = '';
-      Object.entries(groups).forEach(([date, records]) => {
-        if(!records.length) return;
-        html += `<div class="date-group">
+      const dateEntries = Object.entries(groups).filter(([, records]) => records.length);
+      dateEntries.forEach(([date, records], idx) => {
+        const isLast = idx === dateEntries.length - 1;
+        html += `<div class="date-group log-group${isLast ? ' open' : ''}">
           <div class="date-head">${date}</div>
           <table>
             <thead class="col-head"><tr>
@@ -692,6 +696,12 @@
   });
   document.addEventListener('keydown', e => {
     if(e.key === 'Escape') closeCsDropdown();
+  });
+
+  // Buka/tutup grup tanggal dengan klik pada headernya (accordion)
+  el('resultPanel').addEventListener('click', e => {
+    const head = e.target.closest('.date-head');
+    if(head) head.closest('.date-group').classList.toggle('open');
   });
 
   init();
