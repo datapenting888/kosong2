@@ -105,7 +105,7 @@
   .main-top h2{ margin:0 0 4px; font-family:'Georgia', serif; font-size:26px; color:var(--text); }
 
   .stat-row{
-    display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    display:grid; grid-template-columns:repeat(3, 1fr);
     gap:14px; margin-bottom:24px;
   }
   .stat{
@@ -275,7 +275,10 @@
     .staff-panel .stf-row span:first-child{ padding:7px 6px 7px 12px; font-size:11px; }
     .staff-panel .stf-count{ width:52px; font-size:11px; }
     main{ padding:0 12px 20px; }
-    .stat-row{ grid-template-columns:1fr 1fr; }
+    .stat-row{ gap:8px; }
+    .stat{ padding:10px 10px; }
+    .stat .label{ font-size:9px; }
+    .stat .value{ font-size:18px; }
     td[data-label]::before{ width:52px; }
   }
 
