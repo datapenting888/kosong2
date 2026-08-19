@@ -50,23 +50,44 @@
   }
   .live-dot{ width:7px; height:7px; border-radius:50%; background:var(--good, #4fae6e); box-shadow:0 0 6px #4fae6e; }
   .live-dot.err{ background:var(--red); box-shadow:0 0 6px var(--red); }
-  .sidebar-search{ padding:14px 16px; border-bottom:1px solid var(--line); }
-  .sidebar-search input{
+  .sidebar-body{ flex:1; overflow-y:auto; display:flex; flex-direction:column; }
+  .site-select-wrap{ padding:14px 16px; position:relative; }
+
+  .custom-select{ position:relative; }
+  .cs-trigger{
+    width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px;
+    background:#101115; border:1px solid var(--line); color:var(--text);
+    padding:11px 12px; border-radius:8px; font-size:13.5px; text-align:left; cursor:pointer;
+    font-family:inherit;
+  }
+  .cs-trigger:hover{ border-color:#3a3d45; }
+  .custom-select.open .cs-trigger{ border-color:var(--gold-2); }
+  .cs-trigger span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cs-caret{ flex-shrink:0; color:var(--text-dim); transition:transform .15s ease; }
+  .custom-select.open .cs-caret{ transform:rotate(180deg); }
+
+  .cs-dropdown{
+    display:none; position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:20;
+    background:#141519; border:1px solid var(--line); border-radius:10px;
+    box-shadow:0 12px 28px rgba(0,0,0,0.45); overflow:hidden;
+  }
+  .custom-select.open .cs-dropdown{ display:block; }
+  .cs-search{ padding:10px; border-bottom:1px solid var(--line); }
+  .cs-search input{
     width:100%; background:#101115; border:1px solid var(--line); color:var(--text);
     padding:9px 11px; border-radius:7px; font-size:13px; outline:none;
   }
-  .sidebar-search input:focus{ border-color:var(--gold-2); }
-  .sidebar-body{ flex:1; overflow-y:auto; display:flex; flex-direction:column; }
-  .site-select-wrap{ padding:14px 16px; }
-  .site-select-wrap select{
-    width:100%; background:#101115; border:1px solid var(--line); color:var(--text);
-    padding:11px 12px; border-radius:8px; font-size:13.5px; outline:none; cursor:pointer;
-    appearance:none; -webkit-appearance:none;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%238b8d94'><path d='M5.5 7.5l4.5 4.5 4.5-4.5z'/></svg>");
-    background-repeat:no-repeat; background-position:right 12px center; background-size:16px;
+  .cs-search input:focus{ border-color:var(--gold-2); }
+  .cs-options{ max-height:260px; overflow-y:auto; }
+  .cs-option{
+    padding:10px 14px; font-size:13px; color:var(--text); cursor:pointer;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
-  .site-select-wrap select:focus{ border-color:var(--gold-2); }
-  .site-select-wrap select option{ background:#101115; color:var(--text); }
+  .cs-option:hover{ background:rgba(243,201,105,0.08); }
+  .cs-option.active{ background:rgba(243,201,105,0.12); color:var(--gold-1); }
+  .cs-option.empty{ color:var(--text-dim); cursor:default; }
+  .cs-option.empty:hover{ background:none; }
+
   .sidebar-foot{
     padding:14px 18px; border-top:1px solid var(--line);
     font-size:11px; color:var(--text-dim);
@@ -239,7 +260,7 @@
   @media (max-width:480px){
     .sidebar-head{ padding:18px 14px 12px; }
     .sidebar-head h1{ font-size:18px; }
-    .sidebar-search, .site-select-wrap{ padding:10px 14px; }
+    .site-select-wrap{ padding:10px 14px; }
     .staff-panel{ margin:0 10px 10px; }
     .staff-panel .stf-row span:first-child{ padding:7px 6px 7px 12px; font-size:11px; }
     .staff-panel .stf-count{ width:52px; font-size:11px; }
@@ -261,13 +282,21 @@
       <h1>DASHBOARD</h1>
     </div>
     <div class="sidebar-body">
-      <div class="sidebar-search">
-        <input id="siteSearch" type="text" placeholder="Cari situs...">
-      </div>
       <div class="site-select-wrap">
-        <select id="siteSelect">
-          <option>Memuat daftar situs dari spreadsheet...</option>
-        </select>
+        <div class="custom-select" id="customSelect">
+          <button type="button" class="cs-trigger" id="csTrigger">
+            <span id="csTriggerLabel">Memuat daftar situs...</span>
+            <svg class="cs-caret" width="11" height="7" viewBox="0 0 11 7" fill="none">
+              <path d="M1 1L5.5 5.5L10 1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="cs-dropdown" id="csDropdown">
+            <div class="cs-search">
+              <input id="siteSearch" type="text" placeholder="Cari situs...">
+            </div>
+            <div class="cs-options" id="csOptions"></div>
+          </div>
+        </div>
       </div>
       <div class="panel staff-panel" id="staffPanel">
         <div class="empty" style="padding:24px;">—</div>
@@ -396,16 +425,33 @@
   function renderSiteList(filter=''){
     const q = filter.trim().toLowerCase();
     const list = SHEET_TABS.filter(s => s.toLowerCase().includes(q));
-    const select = el('siteSelect');
+    const optionsBox = el('csOptions');
     if(!list.length){
-      select.innerHTML = `<option value="">Tidak ada situs yang cocok</option>`;
+      optionsBox.innerHTML = `<div class="cs-option empty">Tidak ada situs yang cocok</div>`;
       return;
     }
-    select.innerHTML = list.map(s => {
+    optionsBox.innerHTML = list.map(s => {
       const count = SITE_DATA[s] ? countRecords(SITE_DATA[s]) : null;
       const label = count === null ? s : `${s} (${count})`;
-      return `<option value="${s}" ${s===activeSite?'selected':''}>${label}</option>`;
+      return `<div class="cs-option ${s===activeSite?'active':''}" data-site="${s.replace(/"/g,'&quot;')}">${label}</div>`;
     }).join('');
+  }
+
+  function updateTriggerLabel(){
+    const count = activeSite && SITE_DATA[activeSite] ? countRecords(SITE_DATA[activeSite]) : null;
+    el('csTriggerLabel').textContent = activeSite
+      ? (count === null ? activeSite : `${activeSite} (${count})`)
+      : 'Pilih situs...';
+  }
+
+  function openCsDropdown(){
+    el('customSelect').classList.add('open');
+    el('siteSearch').value = '';
+    renderSiteList('');
+    el('siteSearch').focus();
+  }
+  function closeCsDropdown(){
+    el('customSelect').classList.remove('open');
   }
 
   function statusMeta(status){
@@ -532,6 +578,8 @@
   async function selectSite(siteName){
     activeSite = siteName;
     el('activeSiteTitle').textContent = siteName;
+    updateTriggerLabel();
+    closeCsDropdown();
     renderSiteList(el('siteSearch').value);
     el('statRow').innerHTML = '';
     el('staffPanel').innerHTML = '';
@@ -561,6 +609,7 @@
     try{
       const groups = await fetchSiteData(siteName);
       renderSiteList(el('siteSearch').value); // update count badge
+      updateTriggerLabel();
       const allRecords = Object.values(groups).flat();
 
       if(!allRecords.length){
@@ -618,7 +667,8 @@
     } catch(err){
       console.error(err);
       setLive(false);
-      el('siteSelect').innerHTML = `<option value="">Gagal memuat daftar tab</option>`;
+      el('csTriggerLabel').textContent = 'Gagal memuat daftar tab';
+      el('csOptions').innerHTML = `<div class="cs-option empty">Gagal memuat daftar tab</div>`;
       el('resultPanel').innerHTML = `<div class="empty">
         Tidak bisa terhubung ke spreadsheet.<br><br>
         <span style="font-size:12px;">Pastikan spreadsheet di-set "Anyone with the link can view",
@@ -628,7 +678,21 @@
   }
 
   el('siteSearch').addEventListener('input', e => renderSiteList(e.target.value));
-  el('siteSelect').addEventListener('change', e => { if(e.target.value) selectSite(e.target.value); });
+  el('siteSearch').addEventListener('click', e => e.stopPropagation());
+  el('csTrigger').addEventListener('click', e => {
+    e.stopPropagation();
+    el('customSelect').classList.contains('open') ? closeCsDropdown() : openCsDropdown();
+  });
+  el('csOptions').addEventListener('click', e => {
+    const opt = e.target.closest('.cs-option[data-site]');
+    if(opt) selectSite(opt.getAttribute('data-site'));
+  });
+  document.addEventListener('click', e => {
+    if(!el('customSelect').contains(e.target)) closeCsDropdown();
+  });
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape') closeCsDropdown();
+  });
 
   init();
 </script>
