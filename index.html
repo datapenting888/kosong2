@@ -128,9 +128,15 @@
 
   .staff-panel{ margin:0 16px 16px; border:1px solid rgba(255,255,255,0.28); }
   .staff-panel .stf-head{
-    display:flex; background:#111318; padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.28);
+    display:flex; align-items:center; gap:6px; background:#111318; padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.28);
     font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--gold-1); font-weight:700;
+    cursor:pointer; user-select:none;
   }
+  .staff-panel .stf-head:hover{ background:#15171c; }
+  .staff-panel .stf-head::before{
+    content:'▸'; font-size:9px; flex-shrink:0; transition:transform .15s ease; display:inline-block;
+  }
+  .staff-panel.open .stf-head::before{ transform:rotate(90deg); }
   .staff-panel .stf-head span:first-child{ flex:1; border-right:1px solid rgba(255,255,255,0.2); padding-right:8px; }
   .staff-panel .stf-head span:last-child{
     width:64px; flex-shrink:0; text-align:center; padding-left:6px; line-height:1.25; white-space:normal;
@@ -141,7 +147,8 @@
   }
   .staff-panel .stf-row:hover{ background:rgba(243,201,105,0.05); }
   .staff-panel .stf-row:last-child{ border-bottom:none; }
-  .staff-panel .stf-body{ max-height:340px; overflow-y:auto; }
+  .staff-panel .stf-body{ display:none; max-height:340px; overflow-y:auto; }
+  .staff-panel.open .stf-body{ display:block; }
   .staff-panel .stf-row span:first-child{
     flex:1; padding:8px 8px 8px 14px; border-right:1px solid rgba(255,255,255,0.16); word-break:break-word;
   }
@@ -702,6 +709,11 @@
   el('resultPanel').addEventListener('click', e => {
     const head = e.target.closest('.date-head');
     if(head) head.closest('.date-group').classList.toggle('open');
+  });
+
+  // Buka/tutup daftar "Nama Staff / Total Kesalahan" dengan klik pada headernya
+  el('staffPanel').addEventListener('click', e => {
+    if(e.target.closest('.stf-head')) el('staffPanel').classList.toggle('open');
   });
 
   init();
