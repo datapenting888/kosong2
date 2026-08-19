@@ -132,10 +132,13 @@
 
   .ref-col-head{
     display:flex; background:var(--bg-panel); border:1px solid var(--line); border-radius:12px 12px 0 0;
-    border-bottom:none; padding:8px 20px; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+    border-bottom:none; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
     color:var(--text-dim); font-weight:600;
   }
-  .ref-col-head span{ padding-right:12px; }
+  .ref-col-head span{ box-sizing:border-box; padding:8px 20px; }
+  .ref-col-head span:nth-child(1){ width:16%; }
+  .ref-col-head span:nth-child(2){ width:32%; }
+  .ref-col-head span:nth-child(3){ flex:1; }
 
   .date-group{ border-bottom:1px solid var(--line); }
   .date-group:last-child{ border-bottom:none; }
@@ -501,6 +504,11 @@
       if(!g.items.length) return; // lewati kategori kosong (mis. judul sheet di baris pertama)
       html += `<div class="date-group">
         <table>
+          <colgroup>
+            <col style="width:16%;">
+            <col style="width:32%;">
+            <col>
+          </colgroup>
           ${hideThead ? '' : `<thead class="col-head"><tr>
             <th style="width:16%;">Kategori</th>
             <th style="width:32%;">Poin Kesalahan</th>
