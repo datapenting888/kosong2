@@ -67,7 +67,7 @@
   .custom-select.open .cs-caret{ transform:rotate(180deg); }
 
   .cs-dropdown{
-    display:none; position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:20;
+    display:none; position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:50;
     background:#141519; border:1px solid var(--line); border-radius:10px;
     box-shadow:0 12px 28px rgba(0,0,0,0.45); overflow:hidden;
   }
@@ -224,7 +224,7 @@
     body{ overflow-x:hidden; }
     .app{ flex-direction:column; }
     .sidebar{ width:100%; height:auto; position:relative; border-right:none; border-bottom:1px solid var(--line); }
-    .sidebar-body{ flex:none; }
+    .sidebar-body{ flex:none; overflow:visible; }
     .staff-panel{ margin:0 14px 14px; }
     .staff-panel .stf-body{ max-height:260px; }
     main{ padding:0 16px 24px; }
