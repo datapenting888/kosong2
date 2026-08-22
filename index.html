@@ -326,24 +326,36 @@
   }
   .type-toggle{
     display:flex;
-    border:1px solid var(--rule-strong);
-    border-radius:var(--radius-sm);
-    overflow:hidden;
+    gap:10px;
   }
   .type-toggle button{
-    flex:1; border:none; padding:9px 8px;
+    flex:1; padding:9px 18px;
+    border-radius:var(--radius-sm);
     font-family:'IBM Plex Mono', monospace;
     font-size:12.5px;
-    background:var(--paper-card-alt);
+    font-weight:600;
     cursor:pointer;
-    color:var(--ink-soft);
+    transition: all .15s ease;
   }
-  .type-toggle button.on.masuk{ background:var(--green); color:#06251A; }
-  .type-toggle button.on.keluar{ background:var(--red); color:#2B0812; }
+  .type-toggle button.masuk{
+    border:1px solid rgba(51,230,166,0.4);
+    background:rgba(51,230,166,0.08);
+    color:var(--green);
+  }
+  .type-toggle button.masuk.on{ background:var(--green); color:#06251A; border-color:var(--green); }
+  .type-toggle button.keluar{
+    border:1px solid rgba(251,90,121,0.4);
+    background:rgba(251,90,121,0.08);
+    color:var(--red);
+  }
+  .type-toggle button.keluar.on{ background:var(--red); color:#2B0812; border-color:var(--red); }
+  .field-jenis{ margin-bottom:16px; max-width:260px; }
 
   /* ===== Save (centang) button ===== */
   .slip-grid-6{ grid-template-columns: repeat(5, 1fr) 46px; }
+  .slip-grid-5{ grid-template-columns: repeat(4, 1fr) 46px; }
   .slip-grid-rokok{ grid-template-columns: repeat(4, 1fr) 46px; }
+  .hidden{ display:none !important; }
   .save-field{ display:flex; flex-direction:column; gap:6px; }
   .save-field label{ visibility:hidden; }
   .save-check-btn{
@@ -572,7 +584,7 @@
     .stamps{ grid-template-columns:1fr; }
     .charts-row{ grid-template-columns:1fr; }
     .slip-grid{ grid-template-columns:1fr 1fr; }
-    .slip-grid-6, .slip-grid-rokok{ grid-template-columns:1fr 1fr; }
+    .slip-grid-6, .slip-grid-5, .slip-grid-rokok{ grid-template-columns:1fr 1fr; }
     .save-field{ grid-column: 1 / -1; }
     .save-check-btn{ height:42px; }
   }
@@ -709,20 +721,20 @@
     <div class="view" id="view-transaksi">
       <section class="panel">
         <h2>Catat Transaksi</h2>
-        <div class="slip-grid slip-grid-6">
-          <div class="field">
-            <label>Jenis</label>
-            <div class="type-toggle">
-              <button type="button" id="btnMasuk" class="on masuk">Masuk</button>
-              <button type="button" id="btnKeluar">Keluar</button>
-            </div>
+        <div class="field field-jenis">
+          <label>Jenis</label>
+          <div class="type-toggle">
+            <button type="button" id="btnMasuk" class="masuk">Masuk</button>
+            <button type="button" id="btnKeluar" class="keluar">Keluar</button>
           </div>
+        </div>
+        <div class="slip-grid slip-grid-5 hidden" id="fFormFields">
           <div class="field">
             <label>Tanggal</label>
             <input type="date" id="fTanggal">
           </div>
           <div class="field">
-            <label>Jumlah (Rp)</label>
+            <label>Jumlah</label>
             <input type="number" id="fJumlah" placeholder="0" min="0">
           </div>
           <div class="field">
@@ -744,18 +756,6 @@
       </section>
 
       <section class="panel">
-        <h2>Riwayat Transaksi</h2>
-        <div class="table-toolbar">
-          <input type="text" id="searchBox" placeholder="Cari keterangan…" style="flex:1; min-width:160px;">
-          <select id="filterJenis">
-            <option value="">Semua Jenis</option>
-            <option value="masuk">Masuk</option>
-            <option value="keluar">Keluar</option>
-          </select>
-          <select id="filterKategori">
-            <option value="">Semua Kategori</option>
-          </select>
-        </div>
         <div class="toolbar-row">
           <div class="date-range">
             <input type="date" id="fDateFrom" title="Tanggal">
@@ -897,10 +897,12 @@ document.getElementById('fTanggal').valueAsDate = new Date();
 /* ===== Type toggle ===== */
 const btnMasuk = document.getElementById('btnMasuk');
 const btnKeluar = document.getElementById('btnKeluar');
+const fFormFields = document.getElementById('fFormFields');
 function setType(t){
   currentType = t;
   btnMasuk.classList.toggle('on', t==='masuk');
   btnKeluar.classList.toggle('on', t==='keluar');
+  fFormFields.classList.remove('hidden');
 }
 btnMasuk.addEventListener('click', () => { setType('masuk'); });
 btnKeluar.addEventListener('click', () => { setType('keluar'); });
@@ -1304,7 +1306,6 @@ db.collection(COLLECTION).orderBy('tanggal', 'desc').onSnapshot((snap) => {
   transactions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   statusDot.classList.remove('off');
   statusText.textContent = 'Tersambung ke Firebase';
-  populateCategoryFilter();
   render();
 }, (err) => {
   statusDot.classList.add('off');
@@ -1312,27 +1313,9 @@ db.collection(COLLECTION).orderBy('tanggal', 'desc').onSnapshot((snap) => {
   console.error(err);
 });
 
-/* ===== Filters ===== */
-const searchBox = document.getElementById('searchBox');
-const filterJenis = document.getElementById('filterJenis');
-const filterKategori = document.getElementById('filterKategori');
-[searchBox, filterJenis, filterKategori].forEach(el => el.addEventListener('input', render));
-
-function populateCategoryFilter(){
-  const cats = [...new Set(transactions.map(t => t.kategori))].sort();
-  const current = filterKategori.value;
-  filterKategori.innerHTML = '<option value="">Semua Kategori</option>' +
-    cats.map(c => `<option value="${c}">${c}</option>`).join('');
-  filterKategori.value = current;
-}
-
 function getFiltered(){
-  const q = searchBox.value.toLowerCase();
   const tgl = document.getElementById('fDateFrom').value;
   return transactions.filter(t => {
-    if(filterJenis.value && t.jenis !== filterJenis.value) return false;
-    if(filterKategori.value && t.kategori !== filterKategori.value) return false;
-    if(q && !(t.keterangan||'').toLowerCase().includes(q)) return false;
     if(!inDateRange(t.tanggal, tgl, tgl)) return false;
     return true;
   });
