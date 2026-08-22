@@ -1,1 +1,686 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buku Kas Digital · Ultimate Money Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<style>
+  :root{
+    --paper: #F5F0E2;
+    --paper-card: #FFFDF6;
+    --ink: #1F3D2E;
+    --ink-soft: #4A5C50;
+    --rule: #CBBF9F;
+    --rule-strong: #A99A72;
+    --red: #8B2E2E;
+    --red-soft: #F1DEDA;
+    --green: #2F5233;
+    --green-soft: #DCE7DA;
+    --gold: #A9812F;
+    --gold-bright: #C79A3C;
+    --shadow: 0 1px 0 rgba(31,61,46,0.08), 0 8px 20px -12px rgba(31,61,46,0.35);
+    --radius: 3px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      repeating-linear-gradient(180deg, transparent 0 38px, rgba(169,154,114,0.14) 38px 39px),
+      var(--paper);
+    color: var(--ink);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background: var(--gold-bright); color:#fff; }
 
+  /* ===== Layout shell ===== */
+  .shell{
+    display:flex;
+    min-height:100vh;
+  }
+
+  /* ===== Spine / index tabs ===== */
+  .spine{
+    width:64px;
+    flex:0 0 64px;
+    background: linear-gradient(180deg, #1F3D2E, #163023);
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:22px 0;
+    gap:6px;
+  }
+  .spine::after{
+    content:"";
+    position:absolute; top:0; right:-6px; bottom:0; width:6px;
+    background: linear-gradient(90deg, rgba(0,0,0,0.25), transparent);
+  }
+  .spine .hole{
+    width:9px; height:9px; border-radius:50%;
+    background:#0e2118;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.6);
+    margin-bottom:26px;
+  }
+  .tab{
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    color:#DCE7DA;
+    font-family:'Fraunces', serif;
+    font-size:12.5px;
+    letter-spacing:1.5px;
+    padding:14px 8px;
+    border-radius: 0 6px 6px 0;
+    cursor:pointer;
+    opacity:0.62;
+    transition: all .18s ease;
+    margin-right:-1px;
+  }
+  .tab.active{
+    opacity:1;
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow: -6px 0 12px -8px rgba(0,0,0,0.4);
+  }
+  .tab:hover{ opacity:1; }
+
+  /* ===== Main page ===== */
+  .page{
+    flex:1;
+    max-width:1180px;
+    margin:0 auto;
+    padding:36px 40px 80px;
+  }
+  header.masthead{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom:18px;
+    margin-bottom:28px;
+    flex-wrap:wrap;
+    gap:14px;
+  }
+  header.masthead h1{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:32px;
+    margin:0 0 4px;
+    letter-spacing:0.2px;
+  }
+  header.masthead .sub{
+    font-size:12.5px;
+    letter-spacing:2.2px;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  .meta-right{
+    text-align:right;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .meta-right .dot{
+    display:inline-block; width:7px; height:7px; border-radius:50%;
+    background:var(--green); margin-right:6px;
+  }
+  .meta-right .dot.off{ background:var(--red); }
+
+  /* ===== Summary stamps ===== */
+  .stamps{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:18px;
+    margin-bottom:30px;
+  }
+  .stamp{
+    background: var(--paper-card);
+    border:1px solid var(--rule);
+    border-radius: var(--radius);
+    padding:20px 22px;
+    box-shadow: var(--shadow);
+    position:relative;
+    overflow:hidden;
+  }
+  .stamp::before{
+    content:"";
+    position:absolute; left:0; top:0; bottom:0; width:5px;
+  }
+  .stamp.masuk::before{ background: var(--green); }
+  .stamp.keluar::before{ background: var(--red); }
+  .stamp.saldo::before{ background: var(--gold); }
+  .stamp .label{
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:1.6px;
+    color:var(--ink-soft);
+    margin-bottom:10px;
+  }
+  .stamp .amount{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    font-size:26px;
+  }
+  .stamp.masuk .amount{ color:var(--green); }
+  .stamp.keluar .amount{ color:var(--red); }
+  .stamp.saldo .amount{ color:var(--ink); }
+  .stamp .stamp-tag{
+    position:absolute; right:16px; top:16px;
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:11px;
+    color: var(--rule-strong);
+    border:1px solid var(--rule-strong);
+    border-radius:20px;
+    padding:2px 10px;
+    transform:rotate(6deg);
+    opacity:0.7;
+  }
+
+  /* ===== Panels ===== */
+  .panel{
+    background: var(--paper-card);
+    border:1px solid var(--rule);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding:22px 24px;
+    margin-bottom:26px;
+  }
+  .panel h2{
+    font-family:'Fraunces', serif;
+    font-size:17px;
+    margin:0 0 16px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .panel h2::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background: var(--rule);
+  }
+
+  .charts-row{
+    display:grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap:20px;
+  }
+  .chart-box{ position:relative; height:230px; }
+
+  /* ===== Form slip ===== */
+  .slip-grid{
+    display:grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap:14px;
+    align-items:end;
+  }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{
+    font-size:11px; text-transform:uppercase; letter-spacing:1.2px; color:var(--ink-soft);
+  }
+  .field input, .field select{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13.5px;
+    padding:9px 10px;
+    border:1px solid var(--rule-strong);
+    border-radius:2px;
+    background:#fffefb;
+    color:var(--ink);
+  }
+  .field input:focus, .field select:focus{
+    outline:2px solid var(--gold-bright);
+    outline-offset:1px;
+  }
+  .type-toggle{
+    display:flex;
+    border:1px solid var(--rule-strong);
+    border-radius:2px;
+    overflow:hidden;
+  }
+  .type-toggle button{
+    flex:1; border:none; padding:9px 8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    background:#fffefb;
+    cursor:pointer;
+    color:var(--ink-soft);
+  }
+  .type-toggle button.on.masuk{ background:var(--green); color:#fff; }
+  .type-toggle button.on.keluar{ background:var(--red); color:#fff; }
+
+  .btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    font-size:13px;
+    letter-spacing:0.4px;
+    padding:10px 18px;
+    border-radius:2px;
+    border:1px solid var(--ink);
+    background:var(--ink);
+    color:#F5F0E2;
+    cursor:pointer;
+    transition:transform .12s ease;
+  }
+  .btn:hover{ transform:translateY(-1px); }
+  .btn.ghost{
+    background:transparent; color:var(--ink); border:1px solid var(--rule-strong);
+  }
+
+  /* ===== Table ===== */
+  .table-toolbar{
+    display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;
+  }
+  .table-toolbar input, .table-toolbar select{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    padding:8px 10px;
+    border:1px solid var(--rule-strong);
+    border-radius:2px;
+    background:#fffefb;
+  }
+  table{ width:100%; border-collapse:collapse; }
+  thead th{
+    text-align:left;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:1.2px;
+    color:var(--ink-soft);
+    border-bottom:2px solid var(--ink);
+    padding:8px 10px;
+  }
+  tbody td{
+    padding:11px 10px;
+    border-bottom:1px dashed var(--rule);
+    font-size:13.5px;
+    vertical-align:middle;
+  }
+  tbody tr:hover{ background: rgba(169,129,47,0.06); }
+  .amt-cell{ font-family:'IBM Plex Mono', monospace; font-weight:600; text-align:right; }
+  .amt-cell.masuk{ color:var(--green); }
+  .amt-cell.keluar{ color:var(--red); }
+  .badge{
+    font-size:11px;
+    padding:3px 9px;
+    border-radius:20px;
+    font-family:'IBM Plex Mono', monospace;
+    display:inline-block;
+  }
+  .badge.masuk{ background:var(--green-soft); color:var(--green); }
+  .badge.keluar{ background:var(--red-soft); color:var(--red); }
+  .del-btn{
+    border:none; background:none; color:var(--rule-strong); cursor:pointer; font-size:15px;
+  }
+  .del-btn:hover{ color:var(--red); }
+  .empty-row td{ text-align:center; padding:28px; color:var(--ink-soft); font-style:italic; font-family:'Fraunces', serif; }
+
+  @media (max-width: 860px){
+    .spine{ display:none; }
+    .page{ padding:24px 18px 60px; }
+    .stamps{ grid-template-columns:1fr; }
+    .charts-row{ grid-template-columns:1fr; }
+    .slip-grid{ grid-template-columns:1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <nav class="spine">
+    <div class="hole"></div>
+    <div class="tab active" data-view="dashboard">RINGKASAN</div>
+    <div class="tab" data-view="transaksi">TRANSAKSI</div>
+    <div class="tab" data-view="grafik">GRAFIK</div>
+  </nav>
+
+  <main class="page">
+    <header class="masthead">
+      <div>
+        <h1>Buku Kas Digital</h1>
+        <div class="sub">Ultimate Money Management &middot; Personal Ledger</div>
+      </div>
+      <div class="meta-right">
+        <div><span class="dot off" id="statusDot"></span><span id="statusText">Menghubungkan ke Firebase…</span></div>
+        <div id="todayDate"></div>
+      </div>
+    </header>
+
+    <section class="stamps">
+      <div class="stamp masuk">
+        <div class="stamp-tag">masuk</div>
+        <div class="label">Total Pemasukan</div>
+        <div class="amount" id="totalMasuk">Rp 0</div>
+      </div>
+      <div class="stamp keluar">
+        <div class="stamp-tag">keluar</div>
+        <div class="label">Total Pengeluaran</div>
+        <div class="amount" id="totalKeluar">Rp 0</div>
+      </div>
+      <div class="stamp saldo">
+        <div class="stamp-tag">bersih</div>
+        <div class="label">Saldo Bersih</div>
+        <div class="amount" id="totalSaldo">Rp 0</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Catat Transaksi</h2>
+      <div class="slip-grid">
+        <div class="field">
+          <label>Jenis</label>
+          <div class="type-toggle">
+            <button type="button" id="btnMasuk" class="on masuk">Masuk</button>
+            <button type="button" id="btnKeluar">Keluar</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Tanggal</label>
+          <input type="date" id="fTanggal">
+        </div>
+        <div class="field">
+          <label>Jumlah (Rp)</label>
+          <input type="number" id="fJumlah" placeholder="0" min="0">
+        </div>
+        <div class="field">
+          <label>Kategori</label>
+          <select id="fKategori">
+            <option>Gaji</option>
+            <option>Usaha</option>
+            <option>Makan &amp; Minum</option>
+            <option>Transportasi</option>
+            <option>Tagihan</option>
+            <option>Belanja</option>
+            <option>Kesehatan</option>
+            <option>Hiburan</option>
+            <option>Tabungan</option>
+            <option>Lainnya</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Keterangan</label>
+          <input type="text" id="fKet" placeholder="mis. Gaji bulan Agustus">
+        </div>
+      </div>
+      <div style="margin-top:16px; display:flex; gap:10px;">
+        <button class="btn" id="btnSimpan">+ Simpan ke Buku Kas</button>
+        <button class="btn ghost" id="btnReset" type="button">Bersihkan Form</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Grafik Keuangan</h2>
+      <div class="charts-row">
+        <div class="chart-box"><canvas id="trendChart"></canvas></div>
+        <div class="chart-box"><canvas id="categoryChart"></canvas></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Riwayat Transaksi</h2>
+      <div class="table-toolbar">
+        <input type="text" id="searchBox" placeholder="Cari keterangan…" style="flex:1; min-width:160px;">
+        <select id="filterJenis">
+          <option value="">Semua Jenis</option>
+          <option value="masuk">Masuk</option>
+          <option value="keluar">Keluar</option>
+        </select>
+        <select id="filterKategori">
+          <option value="">Semua Kategori</option>
+        </select>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Tanggal</th>
+            <th>Keterangan</th>
+            <th>Kategori</th>
+            <th>Jenis</th>
+            <th style="text-align:right;">Jumlah</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="txTableBody">
+          <tr class="empty-row"><td colspan="6">Belum ada catatan. Isi form di atas untuk mulai mencatat.</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</div>
+
+<script>
+/* =========================================================
+   1. KONFIGURASI FIREBASE — GANTI DENGAN CONFIG PROYEK ANDA
+   Ambil dari: Firebase Console → Project Settings → General
+   → Your apps → SDK setup and configuration
+========================================================= */
+const firebaseConfig = {
+  apiKey: "GANTI_DENGAN_API_KEY",
+  authDomain: "GANTI.firebaseapp.com",
+  projectId: "GANTI_PROJECT_ID",
+  storageBucket: "GANTI.appspot.com",
+  messagingSenderId: "GANTI_SENDER_ID",
+  appId: "GANTI_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+const COLLECTION = "transactions";
+
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+
+// Sign in anonymously so Firestore security rules can scope data per-user if desired
+auth.signInAnonymously().catch(err => {
+  statusText.textContent = "Gagal autentikasi: " + err.message;
+});
+
+let transactions = [];
+let currentType = 'masuk';
+let trendChart, categoryChart;
+
+/* ===== Helpers ===== */
+const rupiah = (n) => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+document.getElementById('fTanggal').valueAsDate = new Date();
+
+/* ===== Type toggle ===== */
+const btnMasuk = document.getElementById('btnMasuk');
+const btnKeluar = document.getElementById('btnKeluar');
+function setType(t){
+  currentType = t;
+  btnMasuk.classList.toggle('on', t==='masuk');
+  btnKeluar.classList.toggle('on', t==='keluar');
+}
+btnMasuk.addEventListener('click', () => setType('masuk'));
+btnKeluar.addEventListener('click', () => setType('keluar'));
+
+/* ===== Save transaction to Firestore ===== */
+document.getElementById('btnSimpan').addEventListener('click', async () => {
+  const jumlah = parseFloat(document.getElementById('fJumlah').value);
+  const tanggal = document.getElementById('fTanggal').value;
+  const kategori = document.getElementById('fKategori').value;
+  const keterangan = document.getElementById('fKet').value.trim();
+
+  if(!jumlah || jumlah <= 0){ alert('Isi jumlah yang valid.'); return; }
+  if(!tanggal){ alert('Pilih tanggal.'); return; }
+
+  try{
+    await db.collection(COLLECTION).add({
+      jenis: currentType,
+      jumlah: jumlah,
+      tanggal: tanggal,
+      kategori: kategori,
+      keterangan: keterangan || '(tanpa keterangan)',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    resetForm();
+  }catch(err){
+    alert('Gagal menyimpan: ' + err.message);
+  }
+});
+
+function resetForm(){
+  document.getElementById('fJumlah').value = '';
+  document.getElementById('fKet').value = '';
+  document.getElementById('fTanggal').valueAsDate = new Date();
+}
+document.getElementById('btnReset').addEventListener('click', resetForm);
+
+/* ===== Delete transaction ===== */
+async function deleteTx(id){
+  if(!confirm('Hapus catatan ini dari buku kas?')) return;
+  try{ await db.collection(COLLECTION).doc(id).delete(); }
+  catch(err){ alert('Gagal menghapus: ' + err.message); }
+}
+
+/* ===== Realtime listener ===== */
+db.collection(COLLECTION).orderBy('tanggal', 'desc').onSnapshot((snap) => {
+  transactions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  statusDot.classList.remove('off');
+  statusText.textContent = 'Tersambung ke Firebase';
+  populateCategoryFilter();
+  render();
+}, (err) => {
+  statusDot.classList.add('off');
+  statusText.textContent = 'Offline / config belum diisi';
+  console.error(err);
+});
+
+/* ===== Filters ===== */
+const searchBox = document.getElementById('searchBox');
+const filterJenis = document.getElementById('filterJenis');
+const filterKategori = document.getElementById('filterKategori');
+[searchBox, filterJenis, filterKategori].forEach(el => el.addEventListener('input', render));
+
+function populateCategoryFilter(){
+  const cats = [...new Set(transactions.map(t => t.kategori))].sort();
+  const current = filterKategori.value;
+  filterKategori.innerHTML = '<option value="">Semua Kategori</option>' +
+    cats.map(c => `<option value="${c}">${c}</option>`).join('');
+  filterKategori.value = current;
+}
+
+function getFiltered(){
+  const q = searchBox.value.toLowerCase();
+  return transactions.filter(t => {
+    if(filterJenis.value && t.jenis !== filterJenis.value) return false;
+    if(filterKategori.value && t.kategori !== filterKategori.value) return false;
+    if(q && !(t.keterangan||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+/* ===== Render ===== */
+function render(){
+  const filtered = getFiltered();
+
+  // Totals (always from full dataset, not filtered)
+  const masuk = transactions.filter(t=>t.jenis==='masuk').reduce((s,t)=>s+Number(t.jumlah||0),0);
+  const keluar = transactions.filter(t=>t.jenis==='keluar').reduce((s,t)=>s+Number(t.jumlah||0),0);
+  document.getElementById('totalMasuk').textContent = rupiah(masuk);
+  document.getElementById('totalKeluar').textContent = rupiah(keluar);
+  document.getElementById('totalSaldo').textContent = rupiah(masuk - keluar);
+
+  // Table
+  const tbody = document.getElementById('txTableBody');
+  if(filtered.length === 0){
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Tidak ada catatan yang cocok.</td></tr>';
+  }else{
+    tbody.innerHTML = filtered.map(t => `
+      <tr>
+        <td>${formatTanggal(t.tanggal)}</td>
+        <td>${escapeHtml(t.keterangan||'')}</td>
+        <td>${escapeHtml(t.kategori||'')}</td>
+        <td><span class="badge ${t.jenis}">${t.jenis === 'masuk' ? 'Masuk' : 'Keluar'}</span></td>
+        <td class="amt-cell ${t.jenis}">${t.jenis==='keluar'?'-':'+'} ${rupiah(t.jumlah)}</td>
+        <td><button class="del-btn" onclick="deleteTx('${t.id}')" title="Hapus">✕</button></td>
+      </tr>
+    `).join('');
+  }
+
+  updateCharts();
+}
+
+function formatTanggal(iso){
+  if(!iso) return '-';
+  const d = new Date(iso);
+  return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
+}
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+/* ===== Charts ===== */
+function updateCharts(){
+  // Monthly trend
+  const monthly = {};
+  transactions.forEach(t => {
+    const key = (t.tanggal||'').slice(0,7); // YYYY-MM
+    if(!key) return;
+    if(!monthly[key]) monthly[key] = { masuk:0, keluar:0 };
+    monthly[key][t.jenis] += Number(t.jumlah||0);
+  });
+  const months = Object.keys(monthly).sort();
+  const trendData = {
+    labels: months.map(m => new Date(m+'-01').toLocaleDateString('id-ID',{month:'short',year:'2-digit'})),
+    datasets: [
+      { label:'Pemasukan', data: months.map(m=>monthly[m].masuk), borderColor:'#2F5233', backgroundColor:'rgba(47,82,51,0.12)', tension:0.3, fill:true },
+      { label:'Pengeluaran', data: months.map(m=>monthly[m].keluar), borderColor:'#8B2E2E', backgroundColor:'rgba(139,46,46,0.10)', tension:0.3, fill:true }
+    ]
+  };
+  if(trendChart){ trendChart.data = trendData; trendChart.update(); }
+  else{
+    trendChart = new Chart(document.getElementById('trendChart'), {
+      type:'line', data: trendData,
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ labels:{ font:{ family:'IBM Plex Mono', size:11 } } }, title:{ display:true, text:'Tren Bulanan', font:{ family:'Fraunces', size:13 }, color:'#1F3D2E' } },
+        scales:{ x:{ ticks:{ font:{ family:'IBM Plex Mono', size:10 } } }, y:{ ticks:{ font:{ family:'IBM Plex Mono', size:10 }, callback:v=>Number(v).toLocaleString('id-ID') } } }
+      }
+    });
+  }
+
+  // Category breakdown (expenses only)
+  const catTotals = {};
+  transactions.filter(t=>t.jenis==='keluar').forEach(t=>{
+    catTotals[t.kategori] = (catTotals[t.kategori]||0) + Number(t.jumlah||0);
+  });
+  const catLabels = Object.keys(catTotals);
+  const catData = {
+    labels: catLabels,
+    datasets: [{ data: catLabels.map(c=>catTotals[c]),
+      backgroundColor:['#8B2E2E','#A9812F','#2F5233','#4A5C50','#C79A3C','#6B3E3E','#3D5A45','#7A6A3E','#5A4A3E','#8A9A7E']
+    }]
+  };
+  if(categoryChart){ categoryChart.data = catData; categoryChart.update(); }
+  else{
+    categoryChart = new Chart(document.getElementById('categoryChart'), {
+      type:'doughnut', data: catData,
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ position:'bottom', labels:{ font:{ family:'IBM Plex Mono', size:10 }, boxWidth:10 } }, title:{ display:true, text:'Pengeluaran per Kategori', font:{ family:'Fraunces', size:13 }, color:'#1F3D2E' } }
+      }
+    });
+  }
+}
+
+/* ===== Spine tab navigation (scroll to section) ===== */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const view = tab.dataset.view;
+    const map = { dashboard: 0, transaksi: 1, grafik: 2 };
+    const panels = document.querySelectorAll('.panel');
+    (view === 'dashboard' ? document.querySelector('.stamps') : panels[map[view]-1] || panels[0])
+      .scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+});
+</script>
+</body>
+</html>
