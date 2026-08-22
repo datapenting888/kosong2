@@ -632,17 +632,17 @@
         <div class="stamp masuk">
           <div class="stamp-tag">masuk</div>
           <div class="label">Total Pemasukan</div>
-          <div class="amount" id="totalMasuk">Rp 0</div>
+          <div class="amount" id="totalMasuk">0</div>
         </div>
         <div class="stamp keluar">
           <div class="stamp-tag">keluar</div>
           <div class="label">Total Pengeluaran</div>
-          <div class="amount" id="totalKeluar">Rp 0</div>
+          <div class="amount" id="totalKeluar">0</div>
         </div>
         <div class="stamp saldo">
           <div class="stamp-tag">bersih</div>
           <div class="label">Saldo Bersih</div>
-          <div class="amount" id="totalSaldo">Rp 0</div>
+          <div class="amount" id="totalSaldo">0</div>
         </div>
       </section>
 
@@ -660,7 +660,7 @@
     <div class="view" id="view-masuk">
       <section class="panel">
         <h2>Catat Barang Masuk</h2>
-        <div class="slip-grid slip-grid-6">
+        <div class="slip-grid slip-grid-5">
           <div class="field">
             <label>Tanggal</label>
             <input type="date" id="mTanggal">
@@ -677,10 +677,6 @@
             <input type="number" id="mQty" placeholder="0" min="0">
           </div>
           <div class="field">
-            <label>Harga Beli (Rp)</label>
-            <input type="number" id="mHarga" placeholder="0" min="0">
-          </div>
-          <div class="field">
             <label>Keterangan</label>
             <input type="text" id="mKet" placeholder="mis. Supplier / Dus">
           </div>
@@ -692,7 +688,11 @@
       </section>
 
       <section class="panel">
-        <h2>Riwayat Barang Masuk</h2>
+        <h2 class="collapsible-title" id="mRiwayatToggle" style="cursor:pointer; display:flex; align-items:center; gap:8px; user-select:none;">
+          <span>Riwayat Barang Masuk</span>
+          <svg id="mRiwayatArrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; transition:transform .2s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </h2>
+        <div id="mRiwayatContent" style="display:none;">
         <div class="toolbar-row">
           <div class="date-range">
             <input type="date" id="mDateFrom" title="Tanggal">
@@ -705,15 +705,15 @@
               <th>Tanggal</th>
               <th>Nama Barang</th>
               <th>Quantity</th>
-              <th style="text-align:right;">Harga Beli</th>
               <th>Keterangan</th>
               <th></th>
             </tr>
           </thead>
           <tbody id="masukTableBody">
-            <tr class="empty-row"><td colspan="6">Belum ada catatan barang masuk.</td></tr>
+            <tr class="empty-row"><td colspan="5">Belum ada catatan barang masuk.</td></tr>
           </tbody>
         </table>
+        </div>
       </section>
     </div>
 
@@ -722,7 +722,6 @@
       <section class="panel">
         <h2>Catat Transaksi</h2>
         <div class="field field-jenis">
-          <label>Jenis</label>
           <div class="type-toggle">
             <button type="button" id="btnMasuk" class="masuk">Masuk</button>
             <button type="button" id="btnKeluar" class="keluar">Keluar</button>
@@ -797,7 +796,7 @@
             </div>
           </div>
           <div class="field">
-            <label>Harga Terjual (Rp)</label>
+            <label>Harga Terjual</label>
             <input type="number" id="rHarga" placeholder="0" min="0">
           </div>
           <div class="field">
@@ -890,7 +889,7 @@ let currentType = 'masuk';
 let trendChart, categoryChart;
 
 /* ===== Helpers ===== */
-const rupiah = (n) => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+const rupiah = (n) => Math.round(n).toLocaleString('id-ID');
 document.getElementById('todayDate').textContent = new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
 document.getElementById('fTanggal').valueAsDate = new Date();
 
@@ -1038,10 +1037,9 @@ async function saveMasuk(){
   const tanggal = document.getElementById('mTanggal').value;
   const barang = document.getElementById('mBarang').value.trim();
   const qtyRaw = document.getElementById('mQty').value;
-  const hargaRaw = document.getElementById('mHarga').value;
   const ket = document.getElementById('mKet').value.trim();
 
-  if(!barang && !qtyRaw && !hargaRaw && !ket){
+  if(!barang && !qtyRaw && !ket){
     alert('Isi minimal salah satu data sebelum menyimpan.');
     return;
   }
@@ -1051,7 +1049,6 @@ async function saveMasuk(){
       tanggal: tanggal || null,
       barang: barang || '-',
       quantity: parseFloat(qtyRaw) || 0,
-      harga: parseFloat(hargaRaw) || 0,
       keterangan: ket || '-',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -1066,7 +1063,6 @@ document.getElementById('mSaveBtn').addEventListener('click', saveMasuk);
 function resetMasukForm(){
   document.getElementById('mBarang').value = '';
   document.getElementById('mQty').value = '';
-  document.getElementById('mHarga').value = '';
   document.getElementById('mKet').value = '';
   document.getElementById('mTanggal').valueAsDate = new Date();
 }
@@ -1087,7 +1083,7 @@ function renderMasuk(){
   const tgl = document.getElementById('mDateFrom').value;
   const filtered = barangMasuk.filter(m => inDateRange(m.tanggal, tgl, tgl));
   if(filtered.length === 0){
-    body.innerHTML = '<tr class="empty-row"><td colspan="6">' + (barangMasuk.length === 0 ? 'Belum ada catatan barang masuk.' : 'Tidak ada catatan pada tanggal ini.') + '</td></tr>';
+    body.innerHTML = '<tr class="empty-row"><td colspan="5">' + (barangMasuk.length === 0 ? 'Belum ada catatan barang masuk.' : 'Tidak ada catatan pada tanggal ini.') + '</td></tr>';
     return;
   }
   body.innerHTML = filtered.map(m => `
@@ -1095,7 +1091,6 @@ function renderMasuk(){
       <td>${formatTanggal(m.tanggal)}</td>
       <td>${escapeHtml(m.barang||'')}</td>
       <td>${escapeHtml(String(m.quantity))}</td>
-      <td class="amt-cell">${rupiah(m.harga)}</td>
       <td>${escapeHtml(m.keterangan||'')}</td>
       <td><button class="del-btn" onclick="deleteMasuk('${m.id}')" title="Hapus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></button></td>
     </tr>
@@ -1103,11 +1098,19 @@ function renderMasuk(){
 }
 document.getElementById('mDateFrom').valueAsDate = new Date();
 document.getElementById('mDateFrom').addEventListener('change', renderMasuk);
+
+document.getElementById('mRiwayatToggle').addEventListener('click', () => {
+  const content = document.getElementById('mRiwayatContent');
+  const arrow = document.getElementById('mRiwayatArrow');
+  const isHidden = content.style.display === 'none';
+  content.style.display = isHidden ? '' : 'none';
+  arrow.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+});
 document.getElementById('btnExportMasuk').addEventListener('click', () => {
   const tgl = document.getElementById('mDateFrom').value;
   const rows = barangMasuk.filter(m => inDateRange(m.tanggal, tgl, tgl))
-    .map(m => [m.tanggal||'', m.barang||'', m.quantity||'', m.harga||'', m.keterangan||'']);
-  downloadCSV('riwayat-barang-masuk.csv', ['Tanggal','Nama Barang','Quantity','Harga Beli','Keterangan'], rows);
+    .map(m => [m.tanggal||'', m.barang||'', m.quantity||'', m.keterangan||'']);
+  downloadCSV('riwayat-barang-masuk.csv', ['Tanggal','Nama Barang','Quantity','Keterangan'], rows);
 });
 
 /* ===== Dropdown "Barang Terjual" — bisa ditambah pilihannya sendiri ===== */
@@ -1499,6 +1502,14 @@ function closeSidebar(){
 document.getElementById('hamburgerBtn').addEventListener('click', openSidebar);
 document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
 sidebarOverlay.addEventListener('click', closeSidebar);
+
+/* ===== Semua kolom tanggal: klik langsung isi tanggal hari ini ===== */
+document.querySelectorAll('input[type="date"]').forEach(el => {
+  el.addEventListener('click', () => {
+    el.valueAsDate = new Date();
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+});
 </script>
 </body>
 </html>
