@@ -632,7 +632,10 @@
           </div>
           <div class="field">
             <label>Nama Barang</label>
-            <input type="text" id="mBarang" placeholder="mis. Indomie Goreng">
+            <div class="combo-wrap" id="mBarangComboWrap">
+              <input type="text" id="mBarang" placeholder="Pilih atau ketik nama barang" autocomplete="off">
+              <div class="combo-panel" id="mBarangDropdown"></div>
+            </div>
           </div>
           <div class="field">
             <label>Quantity</label>
@@ -1160,6 +1163,68 @@ barangDropdown.addEventListener('mousedown', (e) => {
 document.addEventListener('click', (e) => {
   if(!barangComboWrap.contains(e.target)){
     barangDropdown.classList.remove('open');
+  }
+});
+
+/* ===== Dropdown "Nama Barang" (Barang Masuk) — bisa ditambah pilihannya sendiri ===== */
+const MASUK_ITEMS_DOC = "barang_masuk_items";
+let masukItems = [];
+
+const mBarangInput = document.getElementById('mBarang');
+const mBarangDropdown = document.getElementById('mBarangDropdown');
+const mBarangComboWrap = document.getElementById('mBarangComboWrap');
+
+function renderMBarangDropdown(){
+  const q = mBarangInput.value.trim().toLowerCase();
+  const filtered = q ? masukItems.filter(i => i.toLowerCase().includes(q)) : masukItems;
+  let html = '';
+  if(filtered.length === 0){
+    html += `<div class="combo-empty">Tidak ada yang cocok</div>`;
+  } else {
+    html += filtered.map(i => `<div class="combo-option" data-value="${escapeHtml(i)}">${escapeHtml(i)}</div>`).join('');
+  }
+  html += `<div class="combo-option add" id="btnAddMBarangItem">${ADD_ICON_SVG}<span>Tambah pilihan baru</span></div>`;
+  mBarangDropdown.innerHTML = html;
+}
+renderMBarangDropdown(); // isi awal sebelum Firestore merespons
+
+db.collection(SETTINGS_COLLECTION).doc(MASUK_ITEMS_DOC).onSnapshot((doc) => {
+  masukItems = (doc.exists && Array.isArray(doc.data().items)) ? doc.data().items : [];
+  renderMBarangDropdown();
+}, (err) => console.error(err));
+
+async function addNewMBarangItem(){
+  const newItem = prompt('Tambah pilihan baru ke dropdown Nama Barang:\n(mis. nama barang baru)');
+  if(!newItem || !newItem.trim()) return;
+  const value = newItem.trim();
+  try{
+    await db.collection(SETTINGS_COLLECTION).doc(MASUK_ITEMS_DOC).set({
+      items: firebase.firestore.FieldValue.arrayUnion(value)
+    }, { merge: true });
+    mBarangInput.value = value;
+    tryAutoSaveMasuk();
+  }catch(err){
+    alert('Gagal menambah pilihan: ' + err.message);
+  }
+}
+
+mBarangInput.addEventListener('focus', () => { renderMBarangDropdown(); mBarangDropdown.classList.add('open'); });
+mBarangInput.addEventListener('input', () => { renderMBarangDropdown(); mBarangDropdown.classList.add('open'); });
+mBarangDropdown.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  const optEl = e.target.closest('.combo-option');
+  if(!optEl) return;
+  if(optEl.id === 'btnAddMBarangItem'){
+    addNewMBarangItem();
+  } else if(optEl.dataset.value !== undefined){
+    mBarangInput.value = optEl.dataset.value;
+    tryAutoSaveMasuk();
+  }
+  mBarangDropdown.classList.remove('open');
+});
+document.addEventListener('click', (e) => {
+  if(!mBarangComboWrap.contains(e.target)){
+    mBarangDropdown.classList.remove('open');
   }
 });
 
