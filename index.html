@@ -52,51 +52,112 @@
     min-height:100vh;
   }
 
-  /* ===== Spine / index tabs ===== */
-  .spine{
-    width:64px;
-    flex:0 0 64px;
-    background: linear-gradient(180deg, #0D1226, #060811);
-    position:relative;
+  /* ===== Sidebar ===== */
+  .sidebar{
+    width:236px;
+    flex:0 0 236px;
+    background: linear-gradient(180deg, #0D1226, #080B18);
+    border-right:1px solid var(--rule);
+    padding:24px 18px;
     display:flex;
     flex-direction:column;
+    gap:22px;
+  }
+  .sidebar-brand{
+    display:flex;
     align-items:center;
-    padding:22px 0;
-    gap:6px;
-    border-right:1px solid var(--rule);
+    gap:11px;
   }
-  .spine::after{
-    content:"";
-    position:absolute; top:0; right:-6px; bottom:0; width:6px;
-    background: linear-gradient(90deg, rgba(0,0,0,0.5), transparent);
-  }
-  .spine .hole{
-    width:9px; height:9px; border-radius:50%;
-    background:#020308;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.8), 0 0 6px rgba(181,136,255,0.25);
-    margin-bottom:26px;
-  }
-  .tab{
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    color:#7C86A8;
+  .brand-icon{
+    width:36px; height:36px; flex:0 0 36px;
+    border-radius:9px;
+    background: linear-gradient(135deg, var(--green), var(--cyan));
+    display:flex; align-items:center; justify-content:center;
     font-family:'Fraunces', serif;
-    font-size:12.5px;
-    letter-spacing:1.5px;
-    padding:14px 8px;
-    border-radius: 0 6px 6px 0;
+    font-weight:700;
+    font-size:17px;
+    color:#06251A;
+    box-shadow: 0 0 18px -4px rgba(51,230,166,0.6);
+  }
+  .brand-text{ display:flex; flex-direction:column; min-width:0; }
+  .brand-main{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:14.5px;
+    letter-spacing:0.3px;
+    color:var(--ink);
+    white-space:nowrap;
+  }
+  .brand-accent{ color:var(--green); font-weight:500; }
+  .brand-sub{
+    font-size:10px;
+    color:var(--ink-soft);
+    letter-spacing:0.3px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .sidebar-close{
+    display:none;
+    margin-left:auto;
+    background:none; border:none;
+    color:var(--ink-soft);
+    font-size:16px;
     cursor:pointer;
-    opacity:0.72;
-    transition: all .18s ease;
-    margin-right:-1px;
+    padding:4px;
   }
-  .tab.active{
-    opacity:1;
-    background: var(--paper-card);
-    color: var(--gold);
-    box-shadow: -6px 0 16px -8px rgba(0,0,0,0.6);
+  .menu-label{
+    font-size:10.5px;
+    letter-spacing:1.8px;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    padding-left:2px;
   }
-  .tab:hover{ opacity:1; color:var(--ink); }
+  .nav-list{ display:flex; flex-direction:column; gap:11px; }
+  .nav-item{
+    text-align:left;
+    padding:12px 15px;
+    border-radius:10px;
+    border:1px solid rgba(51,230,166,0.32);
+    background: rgba(51,230,166,0.045);
+    color: var(--green);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    font-weight:500;
+    letter-spacing:0.3px;
+    cursor:pointer;
+    transition: all .15s ease;
+  }
+  .nav-item:hover{ background: rgba(51,230,166,0.12); border-color: var(--green); transform:translateX(2px); }
+  .nav-item.active{
+    background: linear-gradient(135deg, rgba(181,136,255,0.32), rgba(181,136,255,0.10));
+    border-color: var(--purple);
+    color:#F1E9FF;
+    box-shadow: 0 0 0 1px rgba(181,136,255,0.35), 0 10px 22px -10px rgba(181,136,255,0.55);
+  }
+
+  /* ===== Hamburger (mobile only) ===== */
+  .hamburger{
+    display:none;
+    background:var(--paper-card-alt);
+    border:1px solid var(--rule-strong);
+    color:var(--ink);
+    width:38px; height:38px; flex:0 0 38px;
+    border-radius:9px;
+    align-items:center; justify-content:center;
+    font-size:16px;
+    cursor:pointer;
+    margin-right:12px;
+  }
+  .masthead-left{ display:flex; align-items:center; }
+  .sidebar-overlay{
+    position:fixed; inset:0;
+    background:rgba(2,3,8,0.65);
+    opacity:0; pointer-events:none;
+    transition:opacity .2s ease;
+    z-index:40;
+  }
+  .sidebar-overlay.show{ opacity:1; pointer-events:auto; }
 
   /* ===== Main page ===== */
   .page{
@@ -115,6 +176,7 @@
     flex-wrap:wrap;
     gap:14px;
   }
+  .masthead-left{ align-items:center; }
   header.masthead h1{
     font-family:'Fraunces', serif;
     font-weight:700;
@@ -347,38 +409,23 @@
   .del-btn:hover{ color:var(--red); }
   .empty-row td{ text-align:center; padding:28px; color:var(--ink-soft); font-style:italic; font-family:'Fraunces', serif; }
 
-  .mobile-tabs{ display:none; }
   @media (max-width: 860px){
-    .spine{ display:none; }
+    .sidebar{
+      position:fixed;
+      top:0; left:0; bottom:0;
+      width:264px;
+      transform: translateX(-100%);
+      transition: transform .25s ease;
+      z-index:50;
+      box-shadow: 24px 0 48px rgba(0,0,0,0.55);
+    }
+    .sidebar.open{ transform: translateX(0); }
+    .sidebar-close{ display:inline-flex; }
+    .hamburger{ display:inline-flex; }
     .page{ padding:24px 18px 60px; }
     .stamps{ grid-template-columns:1fr; }
     .charts-row{ grid-template-columns:1fr; }
     .slip-grid{ grid-template-columns:1fr 1fr; }
-    .mobile-tabs{
-      display:flex;
-      gap:8px;
-      margin-bottom:20px;
-      border-bottom:2px solid var(--rule-strong);
-      padding-bottom:10px;
-    }
-    .mobile-tabs .mtab{
-      flex:1;
-      text-align:center;
-      font-family:'IBM Plex Mono', monospace;
-      font-size:11.5px;
-      letter-spacing:1px;
-      padding:8px 4px;
-      border-radius:2px;
-      background:transparent;
-      color:var(--ink-soft);
-      cursor:pointer;
-      border:1px solid var(--rule-strong);
-    }
-    .mobile-tabs .mtab.active{
-      background:var(--gold);
-      color:#241A00;
-      border-color:var(--gold);
-    }
   }
 
   /* ===== View switching ===== */
@@ -392,32 +439,39 @@
 <body>
 
 <div class="shell">
-  <nav class="spine">
-    <div class="hole"></div>
-    <div class="tab active" data-view="dashboard">RINGKASAN</div>
-    <div class="tab" data-view="transaksi">TRANSAKSI</div>
-    <div class="tab" data-view="rokok">ROKOK</div>
-    <div class="tab" data-view="grafik">GRAFIK</div>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">₿</div>
+      <div class="brand-text">
+        <span class="brand-main">BUKU KAS<span class="brand-accent"> DIGITAL</span></span>
+        <span class="brand-sub">Ultimate Money Management</span>
+      </div>
+      <button class="sidebar-close" id="sidebarClose" aria-label="Tutup menu">✕</button>
+    </div>
+    <div class="menu-label">Menu Dashboard</div>
+    <div class="nav-list">
+      <button class="nav-item active" data-view="dashboard">Ringkasan</button>
+      <button class="nav-item" data-view="transaksi">Transaksi</button>
+      <button class="nav-item" data-view="rokok">Penjualan Rokok</button>
+      <button class="nav-item" data-view="grafik">Grafik Keuangan</button>
+    </div>
   </nav>
 
   <main class="page">
     <header class="masthead">
-      <div>
-        <h1>Buku Kas Digital</h1>
-        <div class="sub">Ultimate Money Management &middot; Personal Ledger</div>
+      <div class="masthead-left">
+        <button class="hamburger" id="hamburgerBtn" aria-label="Buka menu">☰</button>
+        <div>
+          <h1>Buku Kas Digital</h1>
+          <div class="sub">Ultimate Money Management &middot; Personal Ledger</div>
+        </div>
       </div>
       <div class="meta-right">
         <div><span class="dot off" id="statusDot"></span><span id="statusText">Menghubungkan ke Firebase…</span></div>
         <div id="todayDate"></div>
       </div>
     </header>
-
-    <div class="mobile-tabs">
-      <div class="mtab active" data-view="dashboard">RINGKASAN</div>
-      <div class="mtab" data-view="transaksi">TRANSAKSI</div>
-      <div class="mtab" data-view="rokok">ROKOK</div>
-      <div class="mtab" data-view="grafik">GRAFIK</div>
-    </div>
 
     <!-- ================= VIEW: RINGKASAN ================= -->
     <div class="view active" id="view-dashboard">
@@ -892,14 +946,30 @@ function updateCharts(){
 
 /* ===== Tab navigation (spine + mobile) — switch views ===== */
 function switchView(viewName){
-  document.querySelectorAll('.tab, .mtab').forEach(t => t.classList.toggle('active', t.dataset.view === viewName));
+  document.querySelectorAll('.nav-item').forEach(t => t.classList.toggle('active', t.dataset.view === viewName));
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + viewName).classList.add('active');
   window.scrollTo({ top: 0, behavior:'smooth' });
+  closeSidebar();
 }
-document.querySelectorAll('.tab, .mtab').forEach(tab => {
-  tab.addEventListener('click', () => switchView(tab.dataset.view));
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => switchView(item.dataset.view));
 });
+
+/* ===== Sidebar drawer (mobile) ===== */
+const sidebarEl = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+function openSidebar(){
+  sidebarEl.classList.add('open');
+  sidebarOverlay.classList.add('show');
+}
+function closeSidebar(){
+  sidebarEl.classList.remove('open');
+  sidebarOverlay.classList.remove('show');
+}
+document.getElementById('hamburgerBtn').addEventListener('click', openSidebar);
+document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
+sidebarOverlay.addEventListener('click', closeSidebar);
 </script>
 </body>
 </html>
