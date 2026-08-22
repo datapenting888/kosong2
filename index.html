@@ -731,7 +731,7 @@
             <button type="button" id="btnKeluar" class="keluar">Keluar</button>
           </div>
         </div>
-        <div class="slip-grid slip-grid-5 hidden" id="fFormFields">
+        <div class="slip-grid slip-grid-6 hidden" id="fFormFields">
           <div class="field">
             <label>Tanggal</label>
             <input type="date" id="fTanggal">
@@ -741,11 +741,15 @@
             <input type="number" id="fJumlah" placeholder="0" min="0">
           </div>
           <div class="field">
-            <label>Kategori</label>
+            <label>RATE</label>
             <div class="combo-wrap" id="fKategoriComboWrap">
-              <input type="text" id="fKategori" placeholder="Pilih atau ketik kategori" autocomplete="off">
+              <input type="text" id="fKategori" placeholder="Pilih atau ketik rate" autocomplete="off">
               <div class="combo-panel" id="fKategoriDropdown"></div>
             </div>
+          </div>
+          <div class="field">
+            <label>Nominal (Rp)</label>
+            <input type="text" id="fNominal" placeholder="0" readonly>
           </div>
           <div class="field">
             <label>Keterangan</label>
@@ -770,7 +774,7 @@
             <tr>
               <th>Tanggal</th>
               <th>Keterangan</th>
-              <th>Kategori</th>
+              <th>RATE</th>
               <th>Jenis</th>
               <th style="text-align:right;">Jumlah</th>
               <th></th>
@@ -910,6 +914,17 @@ function setType(t){
 btnMasuk.addEventListener('click', () => { setType('masuk'); });
 btnKeluar.addEventListener('click', () => { setType('keluar'); });
 
+/* ===== Nominal (Rp) = Jumlah x Kategori (otomatis) ===== */
+const fJumlahInput = document.getElementById('fJumlah');
+const fNominalInput = document.getElementById('fNominal');
+function updateFNominal(){
+  const jumlah = parseFloat(fJumlahInput.value) || 0;
+  const kategoriAngka = parseFloat(document.getElementById('fKategori').value) || 0;
+  fNominalInput.value = rupiah(jumlah * kategoriAngka);
+}
+fJumlahInput.addEventListener('input', updateFNominal);
+document.getElementById('fKategori').addEventListener('input', updateFNominal);
+
 /* ===== Transaksi: simpan saat tombol centang diklik (boleh belum lengkap) ===== */
 function flashSaved(btn){
   btn.classList.add('saved');
@@ -949,6 +964,7 @@ function resetForm(){
   document.getElementById('fKategori').value = '';
   document.getElementById('fKet').value = '';
   document.getElementById('fTanggal').valueAsDate = new Date();
+  updateFNominal();
 }
 
 /* ===== Delete transaction ===== */
@@ -1281,7 +1297,7 @@ db.collection(SETTINGS_COLLECTION).doc(KATEGORI_ITEMS_DOC).onSnapshot((doc) => {
 }, (err) => console.error(err));
 
 async function addNewFKategoriItem(){
-  const newItem = prompt('Tambah pilihan baru ke dropdown Kategori:\n(mis. nama kategori baru)');
+  const newItem = prompt('Tambah pilihan baru ke dropdown RATE:\n(mis. rate baru)');
   if(!newItem || !newItem.trim()) return;
   const value = newItem.trim();
   try{
@@ -1289,6 +1305,7 @@ async function addNewFKategoriItem(){
       items: firebase.firestore.FieldValue.arrayUnion(value)
     }, { merge: true });
     fKategoriInput.value = value;
+    updateFNominal();
   }catch(err){
     alert('Gagal menambah pilihan: ' + err.message);
   }
@@ -1304,6 +1321,7 @@ fKategoriDropdown.addEventListener('mousedown', (e) => {
     addNewFKategoriItem();
   } else if(optEl.dataset.value !== undefined){
     fKategoriInput.value = optEl.dataset.value;
+    updateFNominal();
   }
   fKategoriDropdown.classList.remove('open');
 });
@@ -1336,7 +1354,7 @@ document.getElementById('fDateFrom').valueAsDate = new Date();
 document.getElementById('fDateFrom').addEventListener('change', render);
 document.getElementById('btnExportTx').addEventListener('click', () => {
   const rows = getFiltered().map(t => [t.tanggal||'', t.keterangan||'', t.kategori||'', t.jenis==='masuk'?'Masuk':'Keluar', t.jumlah||'']);
-  downloadCSV('riwayat-transaksi.csv', ['Tanggal','Keterangan','Kategori','Jenis','Jumlah'], rows);
+  downloadCSV('riwayat-transaksi.csv', ['Tanggal','Keterangan','RATE','Jenis','Jumlah'], rows);
 });
 
 /* ===== Render ===== */
