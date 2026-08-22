@@ -659,9 +659,13 @@
     <!-- ================= VIEW: BARANG MASUK ================= -->
     <div class="view" id="view-masuk">
       <section class="panel">
-        <h2 class="collapsible-title" id="mCatatToggle" style="cursor:pointer; display:flex; align-items:center; gap:8px; user-select:none;">
+        <h2 class="collapsible-title" id="mCatatToggle" style="cursor:pointer; display:flex; align-items:center; gap:10px; user-select:none;">
           <span>Catat Barang Masuk</span>
           <svg id="mCatatArrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; transition:transform .2s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          <div id="mTotalStockBox" style="order:3; display:flex; align-items:center; gap:8px; padding:6px 14px; border:1px solid var(--rule); border-radius:8px; background:rgba(255,255,255,0.03); white-space:nowrap;">
+            <span style="font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);">Total Stock Barang</span>
+            <span id="mTotalStockValue" style="font-family:'Fraunces', serif; font-size:16px; font-weight:600; color:var(--green);">0</span>
+          </div>
         </h2>
         <div id="mCatatContent" style="display:none;">
         <div class="slip-grid slip-grid-5">
@@ -1076,7 +1080,15 @@ async function deleteMasuk(id){
 db.collection(MASUK_COLLECTION).orderBy('tanggal', 'desc').onSnapshot((snap) => {
   barangMasuk = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   renderMasuk();
+  updateTotalStockBarang();
 }, (err) => { console.error(err); });
+
+function updateTotalStockBarang(){
+  const total = barangMasuk.reduce((sum, m) => sum + (parseFloat(m.quantity) || 0), 0);
+  const el = document.getElementById('mTotalStockValue');
+  if(el) el.textContent = total.toLocaleString('id-ID');
+}
+document.getElementById('mTotalStockBox').addEventListener('click', (e) => { e.stopPropagation(); });
 
 function renderMasuk(){
   const body = document.getElementById('masukTableBody');
