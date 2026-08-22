@@ -773,9 +773,9 @@
           <thead>
             <tr>
               <th>Tanggal</th>
-              <th style="text-align:right;">Jumlah</th>
+              <th>Jumlah</th>
               <th>RATE</th>
-              <th style="text-align:right;">Nominal (Rp)</th>
+              <th>Nominal (Rp)</th>
               <th>Keterangan</th>
               <th>Jenis</th>
               <th></th>
@@ -1400,9 +1400,9 @@ function render(){
     tbody.innerHTML = filtered.map(t => `
       <tr>
         <td>${formatTanggal(t.tanggal)}</td>
-        <td class="amt-cell ${t.jenis}">${t.jenis==='keluar'?'-':'+'} ${rupiah(t.jumlah)}</td>
+        <td style="text-align:left;" class="amt-cell ${t.jenis}">${rupiah(t.jumlah)}</td>
         <td>${escapeHtml(t.kategori||'')}</td>
-        <td class="amt-cell ${t.jenis}">${t.jenis==='keluar'?'-':'+'} Rp ${rupiah((parseFloat(t.kategori)||0) * (parseFloat(t.jumlah)||0))}</td>
+        <td style="text-align:left;" class="amt-cell ${t.jenis}">Rp ${rupiah((parseFloat(t.kategori)||0) * (parseFloat(t.jumlah)||0))}</td>
         <td>${escapeHtml(t.keterangan||'')}</td>
         <td><span class="badge ${t.jenis}">${t.jenis === 'masuk' ? 'Masuk' : 'Keluar'}</span></td>
         <td><button class="del-btn" onclick="deleteTx('${t.id}')" title="Hapus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></button></td>
@@ -1428,7 +1428,7 @@ function renderRecent(){
       <td>${formatTanggal(t.tanggal)}</td>
       <td>${escapeHtml(t.keterangan||'')}</td>
       <td><span class="badge ${t.jenis}">${t.jenis === 'masuk' ? 'Masuk' : 'Keluar'}</span></td>
-      <td class="amt-cell ${t.jenis}">${t.jenis==='keluar'?'-':'+'} ${rupiah(t.jumlah)}</td>
+      <td style="text-align:left;" class="amt-cell ${t.jenis}">${rupiah(t.jumlah)}</td>
     </tr>
   `).join('');
 }
