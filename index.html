@@ -718,10 +718,6 @@
             <input type="text" id="fKet" placeholder="mis. Gaji bulan Agustus">
           </div>
         </div>
-        <div style="margin-top:16px; display:flex; gap:10px;">
-          <button class="btn" id="btnSimpan">+ Simpan ke Buku Kas</button>
-          <button class="btn ghost" id="btnReset" type="button">Bersihkan Form</button>
-        </div>
       </section>
 
       <section class="panel">
@@ -788,10 +784,6 @@
             <label>Keterangan</label>
             <input type="text" id="rKet" placeholder="mis. Bungkus / Slop">
           </div>
-        </div>
-        <div style="margin-top:16px; display:flex; gap:10px;">
-          <button class="btn" id="btnSimpanRokok">+ Simpan Penjualan</button>
-          <button class="btn ghost" id="btnResetRokok" type="button">Bersihkan Form</button>
         </div>
       </section>
 
@@ -889,32 +881,38 @@ function setType(t){
   btnMasuk.classList.toggle('on', t==='masuk');
   btnKeluar.classList.toggle('on', t==='keluar');
 }
-btnMasuk.addEventListener('click', () => setType('masuk'));
-btnKeluar.addEventListener('click', () => setType('keluar'));
+btnMasuk.addEventListener('click', () => { setType('masuk'); tryAutoSaveTx(); });
+btnKeluar.addEventListener('click', () => { setType('keluar'); tryAutoSaveTx(); });
 
-/* ===== Save transaction to Firestore ===== */
-document.getElementById('btnSimpan').addEventListener('click', async () => {
-  const jumlah = parseFloat(document.getElementById('fJumlah').value);
-  const tanggal = document.getElementById('fTanggal').value;
-  const kategori = document.getElementById('fKategori').value;
-  const keterangan = document.getElementById('fKet').value.trim();
+/* ===== Transaksi: auto-save saat Jumlah (dan Tanggal) terisi ===== */
+let txAutoSaveTimer = null;
+function tryAutoSaveTx(){
+  clearTimeout(txAutoSaveTimer);
+  txAutoSaveTimer = setTimeout(async () => {
+    const jumlah = parseFloat(document.getElementById('fJumlah').value);
+    const tanggal = document.getElementById('fTanggal').value;
+    const kategori = document.getElementById('fKategori').value;
+    const keterangan = document.getElementById('fKet').value.trim();
 
-  if(!jumlah || jumlah <= 0){ alert('Isi jumlah yang valid.'); return; }
-  if(!tanggal){ alert('Pilih tanggal.'); return; }
+    if(!jumlah || jumlah <= 0 || !tanggal) return;
 
-  try{
-    await db.collection(COLLECTION).add({
-      jenis: currentType,
-      jumlah: jumlah,
-      tanggal: tanggal,
-      kategori: kategori,
-      keterangan: keterangan || '(tanpa keterangan)',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    resetForm();
-  }catch(err){
-    alert('Gagal menyimpan: ' + err.message);
-  }
+    try{
+      await db.collection(COLLECTION).add({
+        jenis: currentType,
+        jumlah: jumlah,
+        tanggal: tanggal,
+        kategori: kategori,
+        keterangan: keterangan || '(tanpa keterangan)',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      resetForm();
+    }catch(err){
+      alert('Gagal menyimpan: ' + err.message);
+    }
+  }, 700);
+}
+['fJumlah','fTanggal','fKategori','fKet'].forEach(id => {
+  document.getElementById(id).addEventListener('input', tryAutoSaveTx);
 });
 
 function resetForm(){
@@ -922,7 +920,6 @@ function resetForm(){
   document.getElementById('fKet').value = '';
   document.getElementById('fTanggal').valueAsDate = new Date();
 }
-document.getElementById('btnReset').addEventListener('click', resetForm);
 
 /* ===== Delete transaction ===== */
 async function deleteTx(id){
@@ -931,29 +928,34 @@ async function deleteTx(id){
   catch(err){ alert('Gagal menghapus: ' + err.message); }
 }
 
-/* ===== Penjualan Rokok: save / reset / delete ===== */
-document.getElementById('btnSimpanRokok').addEventListener('click', async () => {
-  const qty = parseFloat(document.getElementById('rQty').value);
-  const barang = document.getElementById('rBarang').value.trim();
-  const harga = parseFloat(document.getElementById('rHarga').value);
-  const ket = document.getElementById('rKet').value.trim();
+/* ===== Penjualan Rokok: auto-save saat Quantity, Barang Terjual & Harga terisi ===== */
+let rokokAutoSaveTimer = null;
+function tryAutoSaveRokok(){
+  clearTimeout(rokokAutoSaveTimer);
+  rokokAutoSaveTimer = setTimeout(async () => {
+    const qty = parseFloat(document.getElementById('rQty').value);
+    const barang = document.getElementById('rBarang').value.trim();
+    const harga = parseFloat(document.getElementById('rHarga').value);
+    const ket = document.getElementById('rKet').value.trim();
 
-  if(!qty || qty <= 0){ alert('Isi quantity yang valid.'); return; }
-  if(!barang){ alert('Isi nama barang terjual.'); return; }
-  if(!harga || harga <= 0){ alert('Isi harga terjual yang valid.'); return; }
+    if(!qty || qty <= 0 || !barang || !harga || harga <= 0) return;
 
-  try{
-    await db.collection(ROKOK_COLLECTION).add({
-      quantity: qty,
-      barang: barang,
-      harga: harga,
-      keterangan: ket || '-',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    resetRokokForm();
-  }catch(err){
-    alert('Gagal menyimpan: ' + err.message);
-  }
+    try{
+      await db.collection(ROKOK_COLLECTION).add({
+        quantity: qty,
+        barang: barang,
+        harga: harga,
+        keterangan: ket || '-',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      resetRokokForm();
+    }catch(err){
+      alert('Gagal menyimpan: ' + err.message);
+    }
+  }, 700);
+}
+['rQty','rBarang','rHarga','rKet'].forEach(id => {
+  document.getElementById(id).addEventListener('input', tryAutoSaveRokok);
 });
 
 function resetRokokForm(){
@@ -962,7 +964,6 @@ function resetRokokForm(){
   document.getElementById('rHarga').value = '';
   document.getElementById('rKet').value = '';
 }
-document.getElementById('btnResetRokok').addEventListener('click', resetRokokForm);
 
 async function deleteRokok(id){
   if(!confirm('Hapus catatan penjualan rokok ini?')) return;
