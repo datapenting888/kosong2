@@ -168,14 +168,12 @@
     padding:36px 40px 80px;
   }
   header.masthead{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-end;
-    border-bottom: 2px solid var(--rule-strong);
-    padding-bottom:18px;
-    margin-bottom:28px;
-    flex-wrap:wrap;
-    gap:14px;
+    display:none;
+    justify-content:flex-start;
+    align-items:center;
+    padding-bottom:0;
+    margin-bottom:0;
+    border-bottom:none;
   }
   .masthead-left{ align-items:center; }
   header.masthead h1{
@@ -419,6 +417,47 @@
   .icon-btn svg{ width:15px; height:15px; }
   .icon-btn:hover{ color:var(--gold); border-color:var(--gold); background:rgba(255,201,77,0.08); }
 
+  /* ===== Custom combobox (ganti native datalist) ===== */
+  .combo-wrap{ position:relative; }
+  .combo-panel{
+    position:absolute;
+    top:calc(100% + 4px);
+    left:0; right:0;
+    background:var(--paper-card);
+    border:1px solid var(--rule-strong);
+    border-radius:var(--radius-sm);
+    box-shadow:var(--shadow);
+    max-height:236px;
+    overflow-y:auto;
+    z-index:30;
+    display:none;
+  }
+  .combo-panel.open{ display:block; }
+  .combo-option{
+    padding:9px 12px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .combo-option:hover, .combo-option.active{ background:rgba(255,255,255,0.06); }
+  .combo-empty{
+    padding:9px 12px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  .combo-option.add{
+    display:flex; align-items:center; gap:8px;
+    border-top:1px solid var(--rule);
+    color:var(--gold);
+    position:sticky;
+    bottom:0;
+    background:var(--paper-card);
+  }
+  .combo-option.add:hover{ background:rgba(255,201,77,0.1); }
+  .combo-option.add svg{ width:14px; height:14px; flex:0 0 14px; }
+
   .del-btn{
     border:none;
     background:rgba(251,90,121,0.08);
@@ -448,6 +487,7 @@
     .sidebar.open{ transform: translateX(0); }
     .sidebar-close{ display:inline-flex; }
     .hamburger{ display:inline-flex; }
+    header.masthead{ display:flex; margin-bottom:16px; }
     .page{ padding:24px 18px 60px; }
     .stamps{ grid-template-columns:1fr; }
     .charts-row{ grid-template-columns:1fr; }
@@ -487,17 +527,8 @@
 
   <main class="page">
     <header class="masthead">
-      <div class="masthead-left">
-        <button class="hamburger" id="hamburgerBtn" aria-label="Buka menu">☰</button>
-        <div>
-          <h1>Buku Kas Digital</h1>
-          <div class="sub">Ultimate Money Management &middot; Personal Ledger</div>
-        </div>
-      </div>
-      <div class="meta-right">
-        <div><span class="dot off" id="statusDot"></span><span id="statusText">Menghubungkan ke Firebase…</span></div>
-        <div id="todayDate"></div>
-      </div>
+      <button class="hamburger" id="hamburgerBtn" aria-label="Buka menu">☰</button>
+      <div style="display:none;"><span class="dot off" id="statusDot"></span><span id="statusText"></span><span id="todayDate"></span></div>
     </header>
 
     <!-- ================= VIEW: RINGKASAN ================= -->
@@ -555,10 +586,6 @@
             <label>Keterangan</label>
             <input type="text" id="mKet" placeholder="mis. Supplier / Dus">
           </div>
-        </div>
-        <div style="margin-top:16px; display:flex; gap:10px;">
-          <button class="btn" id="btnSimpanMasuk">+ Simpan Barang Masuk</button>
-          <button class="btn ghost" id="btnResetMasuk" type="button">Bersihkan Form</button>
         </div>
       </section>
 
@@ -670,12 +697,9 @@
           </div>
           <div class="field">
             <label>Barang Terjual</label>
-            <div class="combo-row">
-              <input type="text" id="rBarang" list="barangDatalist" placeholder="Pilih atau ketik nama rokok" autocomplete="off">
-              <datalist id="barangDatalist"></datalist>
-              <button type="button" class="icon-btn" id="btnEditBarangList" title="Tambah pilihan baru ke dropdown">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
-              </button>
+            <div class="combo-wrap" id="barangComboWrap">
+              <input type="text" id="rBarang" placeholder="Pilih atau ketik nama rokok" autocomplete="off">
+              <div class="combo-panel" id="barangDropdown"></div>
             </div>
           </div>
           <div class="field">
@@ -880,33 +904,38 @@ function renderRokok(){
   `).join('');
 }
 
-/* ===== Barang Masuk: save / reset / delete / render ===== */
+/* ===== Barang Masuk: auto-save saat Nama Barang, Quantity & Harga terisi ===== */
 document.getElementById('mTanggal').valueAsDate = new Date();
-document.getElementById('btnSimpanMasuk').addEventListener('click', async () => {
-  const tanggal = document.getElementById('mTanggal').value;
-  const barang = document.getElementById('mBarang').value.trim();
-  const qty = parseFloat(document.getElementById('mQty').value);
-  const harga = parseFloat(document.getElementById('mHarga').value);
-  const ket = document.getElementById('mKet').value.trim();
 
-  if(!tanggal){ alert('Pilih tanggal.'); return; }
-  if(!barang){ alert('Isi nama barang.'); return; }
-  if(!qty || qty <= 0){ alert('Isi quantity yang valid.'); return; }
-  if(!harga || harga <= 0){ alert('Isi harga beli yang valid.'); return; }
+let masukAutoSaveTimer = null;
+function tryAutoSaveMasuk(){
+  clearTimeout(masukAutoSaveTimer);
+  masukAutoSaveTimer = setTimeout(async () => {
+    const tanggal = document.getElementById('mTanggal').value;
+    const barang = document.getElementById('mBarang').value.trim();
+    const qty = parseFloat(document.getElementById('mQty').value);
+    const harga = parseFloat(document.getElementById('mHarga').value);
+    const ket = document.getElementById('mKet').value.trim();
 
-  try{
-    await db.collection(MASUK_COLLECTION).add({
-      tanggal: tanggal,
-      barang: barang,
-      quantity: qty,
-      harga: harga,
-      keterangan: ket || '-',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    resetMasukForm();
-  }catch(err){
-    alert('Gagal menyimpan: ' + err.message);
-  }
+    if(!tanggal || !barang || !qty || qty <= 0 || !harga || harga <= 0) return;
+
+    try{
+      await db.collection(MASUK_COLLECTION).add({
+        tanggal: tanggal,
+        barang: barang,
+        quantity: qty,
+        harga: harga,
+        keterangan: ket || '-',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      resetMasukForm();
+    }catch(err){
+      alert('Gagal menyimpan: ' + err.message);
+    }
+  }, 700);
+}
+['mBarang','mQty','mHarga','mKet'].forEach(id => {
+  document.getElementById(id).addEventListener('input', tryAutoSaveMasuk);
 });
 
 function resetMasukForm(){
@@ -916,7 +945,6 @@ function resetMasukForm(){
   document.getElementById('mKet').value = '';
   document.getElementById('mTanggal').valueAsDate = new Date();
 }
-document.getElementById('btnResetMasuk').addEventListener('click', resetMasukForm);
 
 async function deleteMasuk(id){
   if(!confirm('Hapus catatan barang masuk ini?')) return;
@@ -954,19 +982,32 @@ const ROKOK_ITEMS_DEFAULT = [
 ];
 let rokokItems = [...ROKOK_ITEMS_DEFAULT];
 
-function renderBarangDatalist(){
-  const dl = document.getElementById('barangDatalist');
-  dl.innerHTML = rokokItems.map(i => `<option value="${escapeHtml(i)}"></option>`).join('');
+const rBarangInput = document.getElementById('rBarang');
+const barangDropdown = document.getElementById('barangDropdown');
+const barangComboWrap = document.getElementById('barangComboWrap');
+const ADD_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>';
+
+function renderBarangDropdown(){
+  const q = rBarangInput.value.trim().toLowerCase();
+  const filtered = q ? rokokItems.filter(i => i.toLowerCase().includes(q)) : rokokItems;
+  let html = '';
+  if(filtered.length === 0){
+    html += `<div class="combo-empty">Tidak ada yang cocok</div>`;
+  } else {
+    html += filtered.map(i => `<div class="combo-option" data-value="${escapeHtml(i)}">${escapeHtml(i)}</div>`).join('');
+  }
+  html += `<div class="combo-option add" id="btnEditBarangList">${ADD_ICON_SVG}<span>Tambah pilihan baru</span></div>`;
+  barangDropdown.innerHTML = html;
 }
-renderBarangDatalist(); // isi awal (default) sebelum Firestore merespons
+renderBarangDropdown(); // isi awal (default) sebelum Firestore merespons
 
 db.collection(SETTINGS_COLLECTION).doc(ROKOK_ITEMS_DOC).onSnapshot((doc) => {
   const custom = (doc.exists && Array.isArray(doc.data().items)) ? doc.data().items : [];
   rokokItems = [...new Set([...ROKOK_ITEMS_DEFAULT, ...custom])];
-  renderBarangDatalist();
+  renderBarangDropdown();
 }, (err) => console.error(err));
 
-document.getElementById('btnEditBarangList').addEventListener('click', async () => {
+async function addNewBarangItem(){
   const newItem = prompt('Tambah pilihan baru ke dropdown Barang Terjual:\n(mis. nama merek rokok baru)');
   if(!newItem || !newItem.trim()) return;
   const value = newItem.trim();
@@ -974,9 +1015,29 @@ document.getElementById('btnEditBarangList').addEventListener('click', async () 
     await db.collection(SETTINGS_COLLECTION).doc(ROKOK_ITEMS_DOC).set({
       items: firebase.firestore.FieldValue.arrayUnion(value)
     }, { merge: true });
-    document.getElementById('rBarang').value = value;
+    rBarangInput.value = value;
   }catch(err){
     alert('Gagal menambah pilihan: ' + err.message);
+  }
+}
+
+rBarangInput.addEventListener('focus', () => { renderBarangDropdown(); barangDropdown.classList.add('open'); });
+rBarangInput.addEventListener('input', () => { renderBarangDropdown(); barangDropdown.classList.add('open'); });
+barangDropdown.addEventListener('mousedown', (e) => {
+  // mousedown (bukan click) supaya tidak kalah cepat dengan event blur pada input
+  e.preventDefault();
+  const optEl = e.target.closest('.combo-option');
+  if(!optEl) return;
+  if(optEl.id === 'btnEditBarangList'){
+    addNewBarangItem();
+  } else if(optEl.dataset.value !== undefined){
+    rBarangInput.value = optEl.dataset.value;
+  }
+  barangDropdown.classList.remove('open');
+});
+document.addEventListener('click', (e) => {
+  if(!barangComboWrap.contains(e.target)){
+    barangDropdown.classList.remove('open');
   }
 });
 
