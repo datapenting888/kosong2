@@ -659,7 +659,11 @@
     <!-- ================= VIEW: BARANG MASUK ================= -->
     <div class="view" id="view-masuk">
       <section class="panel">
-        <h2>Catat Barang Masuk</h2>
+        <h2 class="collapsible-title" id="mCatatToggle" style="cursor:pointer; display:flex; align-items:center; gap:8px; user-select:none;">
+          <span>Catat Barang Masuk</span>
+          <svg id="mCatatArrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; transition:transform .2s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </h2>
+        <div id="mCatatContent" style="display:none;">
         <div class="slip-grid slip-grid-5">
           <div class="field">
             <label>Tanggal</label>
@@ -685,14 +689,11 @@
             <button type="button" class="save-check-btn" id="mSaveBtn" title="Simpan catatan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
           </div>
         </div>
+        </div>
       </section>
 
       <section class="panel">
-        <h2 class="collapsible-title" id="mRiwayatToggle" style="cursor:pointer; display:flex; align-items:center; gap:8px; user-select:none;">
-          <span>Riwayat Barang Masuk</span>
-          <svg id="mRiwayatArrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; transition:transform .2s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </h2>
-        <div id="mRiwayatContent" style="display:none;">
+        <h2>Riwayat Barang Masuk</h2>
         <div class="toolbar-row">
           <div class="date-range">
             <input type="date" id="mDateFrom" title="Tanggal">
@@ -713,7 +714,6 @@
             <tr class="empty-row"><td colspan="5">Belum ada catatan barang masuk.</td></tr>
           </tbody>
         </table>
-        </div>
       </section>
     </div>
 
@@ -1099,9 +1099,9 @@ function renderMasuk(){
 document.getElementById('mDateFrom').valueAsDate = new Date();
 document.getElementById('mDateFrom').addEventListener('change', renderMasuk);
 
-document.getElementById('mRiwayatToggle').addEventListener('click', () => {
-  const content = document.getElementById('mRiwayatContent');
-  const arrow = document.getElementById('mRiwayatArrow');
+document.getElementById('mCatatToggle').addEventListener('click', () => {
+  const content = document.getElementById('mCatatContent');
+  const arrow = document.getElementById('mCatatArrow');
   const isHidden = content.style.display === 'none';
   content.style.display = isHidden ? '' : 'none';
   arrow.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
