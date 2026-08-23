@@ -700,7 +700,10 @@
         <h2>Riwayat Barang Masuk</h2>
         <div class="toolbar-row">
           <div class="date-range">
-            <input type="date" id="mDateFrom" title="Tanggal">
+            <input type="date" id="mDateFrom" title="Dari Tanggal">
+            <span class="arrow">→</span>
+            <input type="date" id="mDateTo" title="Sampai Tanggal">
+            <button type="button" class="clear-range" id="mClearRange" title="Reset ke hari ini">×</button>
           </div>
           <button type="button" class="btn-export" id="btnExportMasuk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export CSV</button>
         </div>
@@ -775,7 +778,10 @@
       <section class="panel">
         <div class="toolbar-row">
           <div class="date-range">
-            <input type="date" id="fDateFrom" title="Tanggal">
+            <input type="date" id="fDateFrom" title="Dari Tanggal">
+            <span class="arrow">→</span>
+            <input type="date" id="fDateTo" title="Sampai Tanggal">
+            <button type="button" class="clear-range" id="fClearRange" title="Reset ke hari ini">×</button>
           </div>
           <button type="button" class="btn-export" id="btnExportTx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export CSV</button>
         </div>
@@ -1150,10 +1156,11 @@ document.getElementById('mTotalStockBox').addEventListener('click', (e) => { e.s
 
 function renderMasuk(){
   const body = document.getElementById('masukTableBody');
-  const tgl = document.getElementById('mDateFrom').value;
-  const filtered = barangMasuk.filter(m => inDateRange(m.tanggal, tgl, tgl));
+  const from = document.getElementById('mDateFrom').value;
+  const to = document.getElementById('mDateTo').value;
+  const filtered = barangMasuk.filter(m => inDateRange(m.tanggal, from, to));
   if(filtered.length === 0){
-    body.innerHTML = '<tr class="empty-row"><td colspan="5">' + (barangMasuk.length === 0 ? 'Belum ada catatan barang masuk.' : 'Tidak ada catatan pada tanggal ini.') + '</td></tr>';
+    body.innerHTML = '<tr class="empty-row"><td colspan="5">' + (barangMasuk.length === 0 ? 'Belum ada catatan barang masuk.' : 'Tidak ada catatan pada rentang tanggal ini.') + '</td></tr>';
     return;
   }
   body.innerHTML = filtered.map(m => `
@@ -1167,7 +1174,14 @@ function renderMasuk(){
   `).join('');
 }
 document.getElementById('mDateFrom').valueAsDate = new Date();
+document.getElementById('mDateTo').valueAsDate = new Date();
 document.getElementById('mDateFrom').addEventListener('change', renderMasuk);
+document.getElementById('mDateTo').addEventListener('change', renderMasuk);
+document.getElementById('mClearRange').addEventListener('click', () => {
+  document.getElementById('mDateFrom').valueAsDate = new Date();
+  document.getElementById('mDateTo').valueAsDate = new Date();
+  renderMasuk();
+});
 
 document.getElementById('mCatatToggle').addEventListener('click', () => {
   const content = document.getElementById('mCatatContent');
@@ -1177,8 +1191,9 @@ document.getElementById('mCatatToggle').addEventListener('click', () => {
   arrow.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
 });
 document.getElementById('btnExportMasuk').addEventListener('click', () => {
-  const tgl = document.getElementById('mDateFrom').value;
-  const rows = barangMasuk.filter(m => inDateRange(m.tanggal, tgl, tgl))
+  const from = document.getElementById('mDateFrom').value;
+  const to = document.getElementById('mDateTo').value;
+  const rows = barangMasuk.filter(m => inDateRange(m.tanggal, from, to))
     .map(m => [m.tanggal||'', m.barang||'', m.quantity||'', m.keterangan||'']);
   downloadCSV('riwayat-barang-masuk.csv', ['Tanggal','Nama Barang','Quantity','Keterangan'], rows);
 });
@@ -1386,14 +1401,22 @@ db.collection(COLLECTION).orderBy('tanggal', 'desc').onSnapshot((snap) => {
 });
 
 function getFiltered(){
-  const tgl = document.getElementById('fDateFrom').value;
+  const from = document.getElementById('fDateFrom').value;
+  const to = document.getElementById('fDateTo').value;
   return transactions.filter(t => {
-    if(!inDateRange(t.tanggal, tgl, tgl)) return false;
+    if(!inDateRange(t.tanggal, from, to)) return false;
     return true;
   });
 }
 document.getElementById('fDateFrom').valueAsDate = new Date();
+document.getElementById('fDateTo').valueAsDate = new Date();
 document.getElementById('fDateFrom').addEventListener('change', render);
+document.getElementById('fDateTo').addEventListener('change', render);
+document.getElementById('fClearRange').addEventListener('click', () => {
+  document.getElementById('fDateFrom').valueAsDate = new Date();
+  document.getElementById('fDateTo').valueAsDate = new Date();
+  render();
+});
 document.getElementById('btnExportTx').addEventListener('click', () => {
   const rows = getFiltered().map(t => [t.tanggal||'', t.jumlah||'', t.kategori||'', ((parseFloat(t.kategori)||0) * (parseFloat(t.jumlah)||0))||'', t.keterangan||'', t.jenis==='masuk'?'Masuk':'Keluar']);
   downloadCSV('riwayat-transaksi.csv', ['Tanggal','Jumlah','RATE','Nominal (Rp)','Keterangan','Jenis'], rows);
