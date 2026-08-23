@@ -292,6 +292,73 @@
     background: var(--rule);
   }
 
+  /* ===== Modal: Sisa Stock Barang ===== */
+  .stock-modal-overlay{
+    position:fixed; inset:0; z-index:200;
+    background:rgba(4,6,14,0.72);
+    backdrop-filter: blur(2px);
+    display:none;
+    align-items:center; justify-content:center;
+    padding:20px;
+  }
+  .stock-modal-overlay.open{ display:flex; }
+  .stock-modal{
+    width:100%; max-width:420px; max-height:78vh;
+    background: var(--paper-card);
+    border:1px solid var(--rule-strong);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display:flex; flex-direction:column;
+    overflow:hidden;
+  }
+  .stock-modal-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 20px; border-bottom:1px solid var(--rule);
+  }
+  .stock-modal-head h3{
+    font-family:'Fraunces', serif; font-size:16px; margin:0;
+  }
+  .stock-modal-head .sub{
+    font-size:11px; color:var(--ink-soft); margin-top:3px;
+  }
+  .stock-modal-close{
+    width:28px; height:28px; border-radius:8px;
+    border:1px solid var(--rule-strong);
+    background:transparent; color:var(--ink-soft);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; flex-shrink:0;
+  }
+  .stock-modal-close:hover{ color:var(--ink); border-color:var(--ink-soft); }
+  .stock-modal-body{
+    overflow-y:auto; padding:8px 10px;
+  }
+  .stock-row{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; padding:11px 10px;
+    border-bottom:1px dashed var(--rule);
+  }
+  .stock-row:last-child{ border-bottom:none; }
+  .stock-row .name{
+    font-size:13.5px; color:var(--ink);
+  }
+  .stock-row .qty{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13.5px; font-weight:600;
+    color:var(--green);
+    background: var(--green-soft);
+    padding:3px 10px;
+    border-radius:999px;
+    white-space:nowrap;
+  }
+  .stock-row .qty.zero{
+    color:var(--ink-soft);
+    background: rgba(255,255,255,0.05);
+  }
+  .stock-modal-empty{
+    padding:30px 20px; text-align:center;
+    color:var(--ink-soft); font-size:13px;
+  }
+
   .charts-row{
     display:grid;
     grid-template-columns: 1.4fr 1fr;
@@ -663,7 +730,7 @@
         <h2 class="collapsible-title" id="mCatatToggle" style="cursor:pointer; display:flex; align-items:center; gap:10px; user-select:none;">
           <span>Catat Barang Masuk</span>
           <svg id="mCatatArrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; transition:transform .2s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          <div id="mTotalStockBox" style="order:3; display:flex; align-items:center; gap:8px; padding:6px 14px; border:1px solid var(--rule); border-radius:8px; background:rgba(255,255,255,0.03); white-space:nowrap;">
+          <div id="mTotalStockBox" title="Klik untuk lihat rincian stock" style="order:3; display:flex; align-items:center; gap:8px; padding:6px 14px; border:1px solid var(--rule); border-radius:8px; background:rgba(255,255,255,0.03); white-space:nowrap; cursor:pointer; transition: border-color .15s ease, background .15s ease;">
             <span style="font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);">Total Stock Barang</span>
             <span id="mTotalStockValue" style="font-family:'Fraunces', serif; font-size:16px; font-weight:600; color:var(--green);">0</span>
           </div>
@@ -1061,6 +1128,7 @@ db.collection(ROKOK_COLLECTION).orderBy('createdAt', 'desc').onSnapshot((snap) =
 }, (err) => { console.error(err); });
 
 function updateRokokTotals(){
+  if(document.getElementById('stockModalOverlay').classList.contains('open')) renderStockModal();
   const totalQty = rokokSales.reduce((sum, r) => sum + (parseFloat(r.quantity) || 0), 0);
   const totalIdr = rokokSales.reduce((sum, r) => sum + (parseFloat(r.harga) || 0), 0);
   document.getElementById('rTotalQtyValue').textContent = totalQty.toLocaleString('id-ID');
@@ -1158,8 +1226,66 @@ function updateTotalStockBarang(){
   const total = barangMasuk.reduce((sum, m) => sum + (parseFloat(m.quantity) || 0), 0);
   const el = document.getElementById('mTotalStockValue');
   if(el) el.textContent = total.toLocaleString('id-ID');
+  if(document.getElementById('stockModalOverlay').classList.contains('open')) renderStockModal();
 }
-document.getElementById('mTotalStockBox').addEventListener('click', (e) => { e.stopPropagation(); });
+
+/* ===== Rincian sisa stock per nama barang (masuk - terjual) ===== */
+function getSisaStockPerBarang(){
+  const map = {};
+  barangMasuk.forEach(m => {
+    const nama = (m.barang || '-').trim() || '-';
+    if(nama === '-') return;
+    map[nama] = (map[nama] || 0) + (parseFloat(m.quantity) || 0);
+  });
+  rokokSales.forEach(r => {
+    const nama = (r.barang || '-').trim() || '-';
+    if(nama === '-') return;
+    map[nama] = (map[nama] || 0) - (parseFloat(r.quantity) || 0);
+  });
+  return Object.keys(map)
+    .map(nama => ({ nama, sisa: map[nama] }))
+    .sort((a, b) => b.sisa - a.sisa || a.nama.localeCompare(b.nama));
+}
+
+function renderStockModal(){
+  const body = document.getElementById('stockModalBody');
+  const items = getSisaStockPerBarang();
+  if(items.length === 0){
+    body.innerHTML = '<div class="stock-modal-empty">Belum ada data barang.</div>';
+    return;
+  }
+  body.innerHTML = items.map(it => `
+    <div class="stock-row">
+      <span class="name">${escapeHTML(it.nama)}</span>
+      <span class="qty${it.sisa <= 0 ? ' zero' : ''}">${it.sisa.toLocaleString('id-ID')}</span>
+    </div>
+  `).join('');
+}
+
+function escapeHTML(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function openStockModal(){
+  renderStockModal();
+  document.getElementById('stockModalOverlay').classList.add('open');
+}
+function closeStockModal(){
+  document.getElementById('stockModalOverlay').classList.remove('open');
+}
+document.getElementById('mTotalStockBox').addEventListener('click', (e) => {
+  e.stopPropagation();
+  openStockModal();
+});
+document.getElementById('stockModalClose').addEventListener('click', closeStockModal);
+document.getElementById('stockModalOverlay').addEventListener('click', (e) => {
+  if(e.target === e.currentTarget) closeStockModal();
+});
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape') closeStockModal();
+});
 
 function renderMasuk(){
   const body = document.getElementById('masukTableBody');
@@ -1624,5 +1750,21 @@ document.querySelectorAll('input[type="date"]').forEach(el => {
   });
 });
 </script>
+  <!-- ================= MODAL: SISA STOCK BARANG ================= -->
+  <div class="stock-modal-overlay" id="stockModalOverlay">
+    <div class="stock-modal">
+      <div class="stock-modal-head">
+        <div>
+          <h3>Sisa Stock Barang</h3>
+          <div class="sub">Barang masuk dikurangi barang terjual</div>
+        </div>
+        <button type="button" class="stock-modal-close" id="stockModalClose" title="Tutup">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="stock-modal-body" id="stockModalBody"></div>
+    </div>
+  </div>
+
 </body>
 </html>
