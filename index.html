@@ -1214,9 +1214,10 @@ function updateRokokTotals(){
   updateTotalStockBarang();
   if(document.getElementById('stockModalOverlay').classList.contains('open')) renderStockModal();
   const totalQty = rokokSales.reduce((sum, r) => sum + (parseFloat(r.quantity) || 0), 0);
-  const totalIdr = rokokSales.reduce((sum, r) => sum + (parseFloat(r.harga) || 0), 0);
+  const totalIdrRokok = rokokSales.reduce((sum, r) => sum + (parseFloat(r.harga) || 0), 0);
+  const totalIdrMasuk = transactions.filter(t=>t.jenis==='masuk').reduce((s,t)=>s+(parseFloat(t.jumlah)||0),0);
   document.getElementById('rTotalQtyValue').textContent = totalQty.toLocaleString('id-ID');
-  document.getElementById('rTotalIdrValue').textContent = 'Rp ' + rupiah(totalIdr);
+  document.getElementById('rTotalIdrValue').textContent = 'Rp ' + rupiah(totalIdrRokok + totalIdrMasuk);
 }
 
 function renderRokok(){
@@ -1626,6 +1627,7 @@ db.collection(COLLECTION).orderBy('tanggal', 'desc').onSnapshot((snap) => {
   statusDot.classList.remove('off');
   statusText.textContent = 'Tersambung ke Firebase';
   render();
+  updateRokokTotals();
 }, (err) => {
   statusDot.classList.add('off');
   statusText.textContent = 'Offline / config belum diisi';
