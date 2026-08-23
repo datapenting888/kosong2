@@ -838,16 +838,6 @@
             <button type="button" class="save-check-btn" id="fSaveBtn" title="Simpan catatan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
           </div>
         </div>
-        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:14px;">
-          <div id="fTotalMasukBox" style="display:flex; align-items:center; gap:8px; padding:6px 14px; border:1px solid var(--rule); border-radius:8px; background:rgba(255,255,255,0.03); white-space:nowrap;">
-            <span style="font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);">IDR MASUK</span>
-            <span id="fTotalMasukValue" style="font-family:'Fraunces', serif; font-size:21px; font-weight:600; color:var(--green);">Rp 0</span>
-          </div>
-          <div id="fTotalKeluarBox" style="display:flex; align-items:center; gap:8px; padding:6px 14px; border:1px solid var(--rule); border-radius:8px; background:rgba(255,255,255,0.03); white-space:nowrap;">
-            <span style="font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);">IDR KELUAR</span>
-            <span id="fTotalKeluarValue" style="font-family:'Fraunces', serif; font-size:21px; font-weight:600; color:var(--red);">Rp 0</span>
-          </div>
-        </div>
       </section>
 
       <section class="panel">
@@ -858,7 +848,15 @@
             <input type="date" id="fDateTo" title="Sampai Tanggal">
             <button type="button" class="clear-range" id="fClearRange" title="Reset ke hari ini">×</button>
           </div>
-          <button type="button" class="btn-export" id="btnExportTx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export CSV</button>
+          <div id="fTotalMasukBox" style="display:flex; align-items:center; gap:8px; padding:6px 14px; border:1px solid var(--rule); border-radius:8px; background:rgba(255,255,255,0.03); white-space:nowrap;">
+            <span style="font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);">IDR MASUK</span>
+            <span id="fTotalMasukValue" style="font-family:'Fraunces', serif; font-size:21px; font-weight:600; color:var(--green);">0</span>
+          </div>
+          <div id="fTotalKeluarBox" style="display:flex; align-items:center; gap:8px; padding:6px 14px; border:1px solid var(--rule); border-radius:8px; background:rgba(255,255,255,0.03); white-space:nowrap;">
+            <span style="font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);">IDR KELUAR</span>
+            <span id="fTotalKeluarValue" style="font-family:'Fraunces', serif; font-size:21px; font-weight:600; color:var(--red);">0</span>
+          </div>
+          <button type="button" class="btn-export" id="btnExportTx" style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export CSV</button>
         </div>
         <table>
           <thead>
@@ -1670,11 +1668,9 @@ function render(){
   document.getElementById('totalKeluar').textContent = rupiah(keluar);
   document.getElementById('totalSaldo').textContent = rupiah(masuk - keluar);
 
-  // Total nominal (Rp) Pemasukan & Pengeluaran di halaman Transaksi (akumulasi semua transaksi)
-  const nominalMasuk = transactions.filter(t=>t.jenis==='masuk').reduce((s,t)=>s+nominalOf(t),0);
-  const nominalKeluar = transactions.filter(t=>t.jenis==='keluar').reduce((s,t)=>s+nominalOf(t),0);
-  document.getElementById('fTotalMasukValue').textContent = 'Rp ' + rupiah(nominalMasuk);
-  document.getElementById('fTotalKeluarValue').textContent = 'Rp ' + rupiah(nominalKeluar);
+  // Total nominal (Rp) Pemasukan & Pengeluaran di halaman Transaksi (akumulasi semua transaksi, diambil dari kolom Jumlah)
+  document.getElementById('fTotalMasukValue').textContent = rupiah(masuk);
+  document.getElementById('fTotalKeluarValue').textContent = rupiah(keluar);
 
   // Table
   const tbody = document.getElementById('txTableBody');
@@ -1686,7 +1682,7 @@ function render(){
         <td>${formatTanggal(t.tanggal)}</td>
         <td style="text-align:left;" class="amt-cell ${t.jenis}">${rupiah(t.jumlah)}</td>
         <td>${escapeHtml(t.kategori||'')}</td>
-        <td style="text-align:left;" class="amt-cell ${t.jenis}">Rp ${rupiah(nominalOf(t))}</td>
+        <td style="text-align:left;" class="amt-cell ${t.jenis}">${t.jenis === 'masuk' ? '' : 'Rp ' + rupiah(nominalOf(t))}</td>
         <td>${escapeHtml(t.keterangan||'')}</td>
         <td><span class="badge ${t.jenis}">${t.jenis === 'masuk' ? 'Masuk' : 'Keluar'}</span></td>
         <td><button class="del-btn" onclick="deleteTx('${t.id}')" title="Hapus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></button></td>
