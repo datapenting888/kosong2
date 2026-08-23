@@ -353,6 +353,7 @@
 
   /* ===== Save (centang) button ===== */
   .slip-grid-6{ grid-template-columns: repeat(5, 1fr) 46px; }
+  .slip-grid-6.masuk-mode{ grid-template-columns: repeat(3, 1fr) 46px; }
   .slip-grid-5{ grid-template-columns: repeat(4, 1fr) 46px; }
   .slip-grid-rokok{ grid-template-columns: repeat(4, 1fr) 46px; }
   .hidden{ display:none !important; }
@@ -744,7 +745,7 @@
             <button type="button" id="btnKeluar" class="keluar">Keluar</button>
           </div>
         </div>
-        <div class="slip-grid slip-grid-6 hidden" id="fFormFields">
+        <div class="slip-grid slip-grid-6 hidden masuk-mode" id="fFormFields">
           <div class="field">
             <label>Tanggal</label>
             <input type="date" id="fTanggal">
@@ -753,14 +754,14 @@
             <label>Jumlah</label>
             <input type="number" id="fJumlah" placeholder="0" min="0">
           </div>
-          <div class="field">
+          <div class="field" id="fRateField" style="display:none;">
             <label>RATE</label>
             <div class="combo-wrap" id="fKategoriComboWrap">
               <input type="text" id="fKategori" placeholder="Pilih atau ketik rate" autocomplete="off">
               <div class="combo-panel" id="fKategoriDropdown"></div>
             </div>
           </div>
-          <div class="field">
+          <div class="field" id="fNominalField" style="display:none;">
             <label>Nominal (Rp)</label>
             <input type="text" id="fNominal" placeholder="0" readonly>
           </div>
@@ -940,6 +941,12 @@ function setType(t){
   btnMasuk.classList.toggle('on', t==='masuk');
   btnKeluar.classList.toggle('on', t==='keluar');
   fFormFields.classList.remove('hidden');
+  fFormFields.classList.toggle('masuk-mode', t==='masuk');
+  document.getElementById('fRateField').style.display = t==='masuk' ? 'none' : '';
+  document.getElementById('fNominalField').style.display = t==='masuk' ? 'none' : '';
+  if(t==='masuk'){
+    document.getElementById('fKategori').value = '';
+  }
 }
 btnMasuk.addEventListener('click', () => { setType('masuk'); });
 btnKeluar.addEventListener('click', () => { setType('keluar'); });
@@ -978,7 +985,7 @@ async function saveTx(){
       jenis: currentType,
       jumlah: parseFloat(jumlahRaw) || 0,
       tanggal: tanggal || null,
-      kategori: kategori || 'Lainnya',
+      kategori: currentType === 'masuk' ? '' : (kategori || 'Lainnya'),
       keterangan: keterangan || '(tanpa keterangan)',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -1417,8 +1424,12 @@ document.getElementById('fClearRange').addEventListener('click', () => {
   document.getElementById('fDateTo').valueAsDate = new Date();
   render();
 });
+function nominalOf(t){
+  if(t.jenis === 'masuk') return parseFloat(t.jumlah) || 0;
+  return (parseFloat(t.kategori)||0) * (parseFloat(t.jumlah)||0);
+}
 document.getElementById('btnExportTx').addEventListener('click', () => {
-  const rows = getFiltered().map(t => [t.tanggal||'', t.jumlah||'', t.kategori||'', ((parseFloat(t.kategori)||0) * (parseFloat(t.jumlah)||0))||'', t.keterangan||'', t.jenis==='masuk'?'Masuk':'Keluar']);
+  const rows = getFiltered().map(t => [t.tanggal||'', t.jumlah||'', t.kategori||'', nominalOf(t)||'', t.keterangan||'', t.jenis==='masuk'?'Masuk':'Keluar']);
   downloadCSV('riwayat-transaksi.csv', ['Tanggal','Jumlah','RATE','Nominal (Rp)','Keterangan','Jenis'], rows);
 });
 
@@ -1434,7 +1445,6 @@ function render(){
   document.getElementById('totalSaldo').textContent = rupiah(masuk - keluar);
 
   // Total nominal (Rp) Pemasukan & Pengeluaran di halaman Transaksi (akumulasi semua transaksi)
-  const nominalOf = t => (parseFloat(t.kategori)||0) * (parseFloat(t.jumlah)||0);
   const nominalMasuk = transactions.filter(t=>t.jenis==='masuk').reduce((s,t)=>s+nominalOf(t),0);
   const nominalKeluar = transactions.filter(t=>t.jenis==='keluar').reduce((s,t)=>s+nominalOf(t),0);
   document.getElementById('fTotalMasukValue').textContent = 'Rp ' + rupiah(nominalMasuk);
@@ -1450,7 +1460,7 @@ function render(){
         <td>${formatTanggal(t.tanggal)}</td>
         <td style="text-align:left;" class="amt-cell ${t.jenis}">${rupiah(t.jumlah)}</td>
         <td>${escapeHtml(t.kategori||'')}</td>
-        <td style="text-align:left;" class="amt-cell ${t.jenis}">Rp ${rupiah((parseFloat(t.kategori)||0) * (parseFloat(t.jumlah)||0))}</td>
+        <td style="text-align:left;" class="amt-cell ${t.jenis}">Rp ${rupiah(nominalOf(t))}</td>
         <td>${escapeHtml(t.keterangan||'')}</td>
         <td><span class="badge ${t.jenis}">${t.jenis === 'masuk' ? 'Masuk' : 'Keluar'}</span></td>
         <td><button class="del-btn" onclick="deleteTx('${t.id}')" title="Hapus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></button></td>
