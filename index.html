@@ -892,9 +892,9 @@
             <input type="number" id="rQty" placeholder="0" min="0">
           </div>
           <div class="field">
-            <label>Barang Terjual</label>
+            <label>Nama Barang</label>
             <div class="combo-wrap" id="barangComboWrap">
-              <input type="text" id="rBarang" placeholder="Pilih atau ketik nama rokok" autocomplete="off">
+              <input type="text" id="rBarang" placeholder="Pilih atau ketik nama barang" autocomplete="off">
               <div class="combo-panel" id="barangDropdown"></div>
             </div>
           </div>
@@ -1347,12 +1347,21 @@ document.getElementById('btnExportMasuk').addEventListener('click', () => {
   downloadCSV('riwayat-barang-masuk.csv', ['Tanggal','Nama Barang','Quantity','Keterangan'], rows);
 });
 
-/* ===== Dropdown "Barang Terjual" — bisa ditambah pilihannya sendiri ===== */
+/* ===== Dropdown "Nama Barang" (Penjualan Rokok & Barang Masuk) — sinkron, satu daftar bersama ===== */
 const ROKOK_ITEMS_DEFAULT = [
   "Sampoerna Mild", "Marlboro Bolong", "Dji Sam Soe", "Marlboro Ice Burst",
   "Terea Sun Pearl", "Sampoerna Splash Royal", "Sampoerna Splash Tropical", "Surya"
 ];
-let rokokItems = [...ROKOK_ITEMS_DEFAULT];
+const SHARED_ITEMS_DOC = "barang_items"; // dokumen baru: sumber utama untuk item baru ke depannya
+let legacyRokokItems = [];   // dari dokumen lama "rokok_items" (kompatibilitas data lama)
+let legacyMasukItems = [];   // dari dokumen lama "barang_masuk_items" (kompatibilitas data lama)
+let sharedItems = [...ROKOK_ITEMS_DEFAULT];
+
+function recomputeSharedItems(){
+  sharedItems = [...new Set([...ROKOK_ITEMS_DEFAULT, ...legacyRokokItems, ...legacyMasukItems])];
+  renderBarangDropdown();
+  renderMBarangDropdown();
+}
 
 const rBarangInput = document.getElementById('rBarang');
 const barangDropdown = document.getElementById('barangDropdown');
@@ -1361,7 +1370,7 @@ const ADD_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
 
 function renderBarangDropdown(){
   const q = rBarangInput.value.trim().toLowerCase();
-  const filtered = q ? rokokItems.filter(i => i.toLowerCase().includes(q)) : rokokItems;
+  const filtered = q ? sharedItems.filter(i => i.toLowerCase().includes(q)) : sharedItems;
   let html = '';
   if(filtered.length === 0){
     html += `<div class="combo-empty">Tidak ada yang cocok</div>`;
@@ -1374,17 +1383,16 @@ function renderBarangDropdown(){
 renderBarangDropdown(); // isi awal (default) sebelum Firestore merespons
 
 db.collection(SETTINGS_COLLECTION).doc(ROKOK_ITEMS_DOC).onSnapshot((doc) => {
-  const custom = (doc.exists && Array.isArray(doc.data().items)) ? doc.data().items : [];
-  rokokItems = [...new Set([...ROKOK_ITEMS_DEFAULT, ...custom])];
-  renderBarangDropdown();
+  legacyRokokItems = (doc.exists && Array.isArray(doc.data().items)) ? doc.data().items : [];
+  recomputeSharedItems();
 }, (err) => console.error(err));
 
 async function addNewBarangItem(){
-  const newItem = prompt('Tambah pilihan baru ke dropdown Barang Terjual:\n(mis. nama merek rokok baru)');
+  const newItem = prompt('Tambah pilihan baru ke dropdown Nama Barang:\n(mis. nama barang baru)');
   if(!newItem || !newItem.trim()) return;
   const value = newItem.trim();
   try{
-    await db.collection(SETTINGS_COLLECTION).doc(ROKOK_ITEMS_DOC).set({
+    await db.collection(SETTINGS_COLLECTION).doc(SHARED_ITEMS_DOC).set({
       items: firebase.firestore.FieldValue.arrayUnion(value)
     }, { merge: true });
     rBarangInput.value = value;
@@ -1413,9 +1421,8 @@ document.addEventListener('click', (e) => {
   }
 });
 
-/* ===== Dropdown "Nama Barang" (Barang Masuk) — bisa ditambah pilihannya sendiri ===== */
+/* ===== Dropdown "Nama Barang" (Barang Masuk) — pakai daftar bersama yang sama ===== */
 const MASUK_ITEMS_DOC = "barang_masuk_items";
-let masukItems = [];
 
 const mBarangInput = document.getElementById('mBarang');
 const mBarangDropdown = document.getElementById('mBarangDropdown');
@@ -1423,7 +1430,7 @@ const mBarangComboWrap = document.getElementById('mBarangComboWrap');
 
 function renderMBarangDropdown(){
   const q = mBarangInput.value.trim().toLowerCase();
-  const filtered = q ? masukItems.filter(i => i.toLowerCase().includes(q)) : masukItems;
+  const filtered = q ? sharedItems.filter(i => i.toLowerCase().includes(q)) : sharedItems;
   let html = '';
   if(filtered.length === 0){
     html += `<div class="combo-empty">Tidak ada yang cocok</div>`;
@@ -1436,8 +1443,14 @@ function renderMBarangDropdown(){
 renderMBarangDropdown(); // isi awal sebelum Firestore merespons
 
 db.collection(SETTINGS_COLLECTION).doc(MASUK_ITEMS_DOC).onSnapshot((doc) => {
-  masukItems = (doc.exists && Array.isArray(doc.data().items)) ? doc.data().items : [];
-  renderMBarangDropdown();
+  legacyMasukItems = (doc.exists && Array.isArray(doc.data().items)) ? doc.data().items : [];
+  recomputeSharedItems();
+}, (err) => console.error(err));
+
+db.collection(SETTINGS_COLLECTION).doc(SHARED_ITEMS_DOC).onSnapshot((doc) => {
+  const shared = (doc.exists && Array.isArray(doc.data().items)) ? doc.data().items : [];
+  legacyRokokItems = [...new Set([...legacyRokokItems, ...shared])];
+  recomputeSharedItems();
 }, (err) => console.error(err));
 
 async function addNewMBarangItem(){
@@ -1445,7 +1458,7 @@ async function addNewMBarangItem(){
   if(!newItem || !newItem.trim()) return;
   const value = newItem.trim();
   try{
-    await db.collection(SETTINGS_COLLECTION).doc(MASUK_ITEMS_DOC).set({
+    await db.collection(SETTINGS_COLLECTION).doc(SHARED_ITEMS_DOC).set({
       items: firebase.firestore.FieldValue.arrayUnion(value)
     }, { merge: true });
     mBarangInput.value = value;
