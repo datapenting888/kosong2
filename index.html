@@ -1144,6 +1144,7 @@ db.collection(ROKOK_COLLECTION).orderBy('createdAt', 'desc').onSnapshot((snap) =
 }, (err) => { console.error(err); });
 
 function updateRokokTotals(){
+  updateTotalStockBarang();
   if(document.getElementById('stockModalOverlay').classList.contains('open')) renderStockModal();
   const totalQty = rokokSales.reduce((sum, r) => sum + (parseFloat(r.quantity) || 0), 0);
   const totalIdr = rokokSales.reduce((sum, r) => sum + (parseFloat(r.harga) || 0), 0);
@@ -1239,7 +1240,7 @@ db.collection(MASUK_COLLECTION).orderBy('tanggal', 'desc').onSnapshot((snap) => 
 }, (err) => { console.error(err); });
 
 function updateTotalStockBarang(){
-  const total = barangMasuk.reduce((sum, m) => sum + (parseFloat(m.quantity) || 0), 0);
+  const total = getSisaStockPerBarang().reduce((sum, it) => sum + it.sisa, 0);
   const el = document.getElementById('mTotalStockValue');
   if(el) el.textContent = total.toLocaleString('id-ID');
   if(document.getElementById('stockModalOverlay').classList.contains('open')) renderStockModal();
