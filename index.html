@@ -422,7 +422,7 @@
   .slip-grid-6{ grid-template-columns: repeat(5, 1fr) 46px; }
   .slip-grid-6.masuk-mode{ grid-template-columns: repeat(3, 1fr) 46px; }
   .slip-grid-5{ grid-template-columns: repeat(4, 1fr) 46px; }
-  .slip-grid-rokok{ grid-template-columns: repeat(4, 1fr) 46px; }
+  .slip-grid-rokok{ grid-template-columns: repeat(5, 1fr) 46px; }
   .hidden{ display:none !important; }
   .save-field{ display:flex; flex-direction:column; gap:6px; }
   .save-field label{ visibility:hidden; }
@@ -899,8 +899,12 @@
             </div>
           </div>
           <div class="field">
+            <label>Nominal</label>
+            <input type="number" id="rNominal" placeholder="0" min="0">
+          </div>
+          <div class="field">
             <label>Harga Terjual</label>
-            <input type="number" id="rHarga" placeholder="0" min="0">
+            <input type="number" id="rHarga" placeholder="0" min="0" readonly style="opacity:.75; cursor:not-allowed;">
           </div>
           <div class="field">
             <label>Keterangan</label>
@@ -1095,15 +1099,28 @@ async function deleteTx(id){
   catch(err){ alert('Gagal menghapus: ' + err.message); }
 }
 
+/* ===== Harga Terjual = Quantity x Nominal (otomatis) ===== */
+const rQtyInput = document.getElementById('rQty');
+const rNominalInput = document.getElementById('rNominal');
+const rHargaInput = document.getElementById('rHarga');
+function updateRHarga(){
+  const qty = parseFloat(rQtyInput.value) || 0;
+  const nominal = parseFloat(rNominalInput.value) || 0;
+  rHargaInput.value = qty * nominal;
+}
+rQtyInput.addEventListener('input', updateRHarga);
+rNominalInput.addEventListener('input', updateRHarga);
+
 /* ===== Penjualan Rokok: simpan saat tombol centang diklik (boleh belum lengkap) ===== */
 async function saveRokok(){
   const btn = document.getElementById('rSaveBtn');
   const qtyRaw = document.getElementById('rQty').value;
   const barang = document.getElementById('rBarang').value.trim();
+  const nominalRaw = document.getElementById('rNominal').value;
   const hargaRaw = document.getElementById('rHarga').value;
   const ket = document.getElementById('rKet').value.trim();
 
-  if(!qtyRaw && !barang && !hargaRaw && !ket){
+  if(!qtyRaw && !barang && !nominalRaw && !hargaRaw && !ket){
     alert('Isi minimal salah satu data sebelum menyimpan.');
     return;
   }
@@ -1112,6 +1129,7 @@ async function saveRokok(){
     await db.collection(ROKOK_COLLECTION).add({
       quantity: parseFloat(qtyRaw) || 0,
       barang: barang || '-',
+      nominal: parseFloat(nominalRaw) || 0,
       harga: parseFloat(hargaRaw) || 0,
       keterangan: ket || '-',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1127,6 +1145,7 @@ document.getElementById('rSaveBtn').addEventListener('click', saveRokok);
 function resetRokokForm(){
   document.getElementById('rQty').value = '';
   document.getElementById('rBarang').value = '';
+  document.getElementById('rNominal').value = '';
   document.getElementById('rHarga').value = '';
   document.getElementById('rKet').value = '';
 }
