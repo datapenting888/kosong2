@@ -802,14 +802,6 @@
       <section class="panel">
         <h2 style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
           <span>Catat Transaksi</span>
-          <div id="fTotalMasukBox" style="order:2; display:flex; align-items:center; gap:8px; padding:6px 14px; border:1px solid var(--rule); border-radius:8px; background:rgba(255,255,255,0.03); white-space:nowrap;">
-            <span style="font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);">Total Pemasukan</span>
-            <span id="fTotalMasukValue" style="font-family:'Fraunces', serif; font-size:16px; font-weight:600; color:var(--green);">Rp 0</span>
-          </div>
-          <div id="fTotalKeluarBox" style="order:3; display:flex; align-items:center; gap:8px; padding:6px 14px; border:1px solid var(--rule); border-radius:8px; background:rgba(255,255,255,0.03); white-space:nowrap;">
-            <span style="font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);">Total Pengeluaran</span>
-            <span id="fTotalKeluarValue" style="font-family:'Fraunces', serif; font-size:16px; font-weight:600; color:var(--red);">Rp 0</span>
-          </div>
         </h2>
         <div class="field field-jenis">
           <div class="type-toggle">
@@ -829,7 +821,7 @@
           <div class="field" id="fRateField" style="display:none;">
             <label>RATE</label>
             <div class="combo-wrap" id="fKategoriComboWrap">
-              <input type="text" id="fKategori" placeholder="Pilih atau ketik rate" autocomplete="off">
+              <input type="text" id="fKategori" placeholder="mis. 4.52" autocomplete="off" inputmode="decimal">
               <div class="combo-panel" id="fKategoriDropdown"></div>
             </div>
           </div>
@@ -844,6 +836,16 @@
           <div class="save-field">
             <label>Simpan</label>
             <button type="button" class="save-check-btn" id="fSaveBtn" title="Simpan catatan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:14px;">
+          <div id="fTotalMasukBox" style="display:flex; align-items:center; gap:8px; padding:6px 14px; border:1px solid var(--rule); border-radius:8px; background:rgba(255,255,255,0.03); white-space:nowrap;">
+            <span style="font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);">IDR MASUK</span>
+            <span id="fTotalMasukValue" style="font-family:'Fraunces', serif; font-size:21px; font-weight:600; color:var(--green);">Rp 0</span>
+          </div>
+          <div id="fTotalKeluarBox" style="display:flex; align-items:center; gap:8px; padding:6px 14px; border:1px solid var(--rule); border-radius:8px; background:rgba(255,255,255,0.03); white-space:nowrap;">
+            <span style="font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);">IDR KELUAR</span>
+            <span id="fTotalKeluarValue" style="font-family:'Fraunces', serif; font-size:21px; font-weight:600; color:var(--red);">Rp 0</span>
           </div>
         </div>
       </section>
@@ -1038,6 +1040,28 @@ function attachRibuanFormatting(input){
     input.value = formatRibuanStr(digitsOnly);
   });
 }
+
+/* ===== Format RATE: boleh diketik manual dengan TITIK sebagai desimal (mis. 4.52) ===== */
+function parseRate(str){
+  if(!str) return 0;
+  let cleaned = String(str).replace(/[^0-9.]/g, '');
+  const firstDot = cleaned.indexOf('.');
+  if(firstDot !== -1){
+    cleaned = cleaned.slice(0, firstDot + 1) + cleaned.slice(firstDot + 1).replace(/\./g, '');
+  }
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? 0 : n;
+}
+function attachRateFormatting(input){
+  input.addEventListener('input', () => {
+    let cleaned = input.value.replace(/[^0-9.]/g, '');
+    const firstDot = cleaned.indexOf('.');
+    if(firstDot !== -1){
+      cleaned = cleaned.slice(0, firstDot + 1) + cleaned.slice(firstDot + 1).replace(/\./g, '');
+    }
+    input.value = cleaned;
+  });
+}
 document.getElementById('todayDate').textContent = new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
 document.getElementById('fTanggal').valueAsDate = new Date();
 
@@ -1066,7 +1090,7 @@ const fNominalInput = document.getElementById('fNominal');
 attachRibuanFormatting(fJumlahInput);
 function updateFNominal(){
   const jumlah = parseRibuan(fJumlahInput.value);
-  const kategoriAngka = parseRibuan(document.getElementById('fKategori').value);
+  const kategoriAngka = parseRate(document.getElementById('fKategori').value);
   fNominalInput.value = 'Rp ' + rupiah(jumlah * kategoriAngka);
 }
 fJumlahInput.addEventListener('input', updateFNominal);
@@ -1540,7 +1564,7 @@ let kategoriItems = [...KATEGORI_ITEMS_DEFAULT];
 const fKategoriInput = document.getElementById('fKategori');
 const fKategoriDropdown = document.getElementById('fKategoriDropdown');
 const fKategoriComboWrap = document.getElementById('fKategoriComboWrap');
-attachRibuanFormatting(fKategoriInput);
+attachRateFormatting(fKategoriInput);
 
 function renderFKategoriDropdown(){
   const q = fKategoriInput.value.trim().toLowerCase();
@@ -1570,7 +1594,7 @@ async function addNewFKategoriItem(){
     await db.collection(SETTINGS_COLLECTION).doc(KATEGORI_ITEMS_DOC).set({
       items: firebase.firestore.FieldValue.arrayUnion(value)
     }, { merge: true });
-    fKategoriInput.value = formatRibuanStr(String(parseRibuan(value)));
+    fKategoriInput.value = value.replace(/[^0-9.]/g, '');
     updateFNominal();
   }catch(err){
     alert('Gagal menambah pilihan: ' + err.message);
@@ -1586,7 +1610,7 @@ fKategoriDropdown.addEventListener('mousedown', (e) => {
   if(optEl.id === 'btnAddFKategoriItem'){
     addNewFKategoriItem();
   } else if(optEl.dataset.value !== undefined){
-    fKategoriInput.value = formatRibuanStr(String(parseRibuan(optEl.dataset.value)));
+    fKategoriInput.value = String(optEl.dataset.value).replace(/[^0-9.]/g, '');
     updateFNominal();
   }
   fKategoriDropdown.classList.remove('open');
