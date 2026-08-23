@@ -507,6 +507,35 @@
   }
   .badge.masuk{ background:var(--green-soft); color:var(--green); }
   .badge.keluar{ background:var(--red-soft); color:var(--red); }
+  .badge.done{ background:var(--green-soft); color:var(--green); }
+  .badge.pending{ background:rgba(255,201,77,0.16); color:var(--gold); }
+  .status-trigger{
+    display:inline-flex; align-items:center; gap:5px;
+    font-size:11px;
+    padding:3px 9px;
+    border-radius:20px;
+    font-family:'IBM Plex Mono', monospace;
+    border:1px dashed var(--rule-strong);
+    background:rgba(255,255,255,0.03);
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition: all .15s ease;
+  }
+  .status-trigger:hover{ border-color:var(--gold); color:var(--ink); }
+  .status-trigger svg{ width:11px; height:11px; flex:0 0 11px; }
+  #statusDropdownPanel{
+    position:fixed;
+    min-width:170px;
+    background:var(--paper-card);
+    border:1px solid var(--rule-strong);
+    border-radius:var(--radius-sm);
+    box-shadow:var(--shadow);
+    max-height:236px;
+    overflow-y:auto;
+    z-index:60;
+    display:none;
+  }
+  #statusDropdownPanel.open{ display:block; }
   .combo-row{ display:flex; gap:6px; }
   .combo-row input{ flex:1; }
   .icon-btn{
@@ -868,11 +897,12 @@
               <th>Nominal (Rp)</th>
               <th>Keterangan</th>
               <th>Jenis</th>
+              <th>Status</th>
               <th></th>
             </tr>
           </thead>
           <tbody id="txTableBody">
-            <tr class="empty-row"><td colspan="7">Belum ada catatan. Isi form di atas untuk mulai mencatat.</td></tr>
+            <tr class="empty-row"><td colspan="8">Belum ada catatan. Isi form di atas untuk mulai mencatat.</td></tr>
           </tbody>
         </table>
       </section>
@@ -1621,6 +1651,98 @@ document.addEventListener('click', (e) => {
   }
 });
 
+/* ===== Dropdown "Status" (Done / Pending) per baris transaksi ===== */
+const STATUS_ITEMS_DOC = "status_items";
+const STATUS_ITEMS_DEFAULT = ['Done', 'Pending'];
+let statusItems = [...STATUS_ITEMS_DEFAULT];
+let openStatusTxId = null;
+const statusDropdownPanel = document.getElementById('statusDropdownPanel');
+const PENCIL_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>';
+
+db.collection(SETTINGS_COLLECTION).doc(STATUS_ITEMS_DOC).onSnapshot((doc) => {
+  const custom = (doc.exists && Array.isArray(doc.data().items)) ? doc.data().items : [];
+  statusItems = [...new Set([...STATUS_ITEMS_DEFAULT, ...custom])];
+  if(openStatusTxId) renderStatusDropdownPanel(openStatusTxId);
+}, (err) => console.error(err));
+
+function statusBadgeClass(status){
+  const s = (status||'').toLowerCase();
+  if(s === 'done') return 'done';
+  if(s === 'pending') return 'pending';
+  return '';
+}
+function renderStatusTrigger(t){
+  const cls = statusBadgeClass(t.status);
+  const label = t.status ? escapeHtml(t.status) : 'Pilih status';
+  const dotSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+  return `<button type="button" class="status-trigger ${cls}" onclick="openStatusDropdown(event, '${t.id}')">${label}${dotSvg}</button>`;
+}
+function renderStatusDropdownPanel(txId){
+  let html = statusItems.map(s => `<div class="combo-option" data-value="${escapeHtml(s)}">${escapeHtml(s)}</div>`).join('');
+  html += `<div class="combo-option add" id="btnEditStatusItems">${PENCIL_ICON_SVG}<span>Tambah / Edit pilihan</span></div>`;
+  statusDropdownPanel.innerHTML = html;
+  statusDropdownPanel.dataset.txId = txId;
+}
+window.openStatusDropdown = function(e, txId){
+  e.stopPropagation();
+  const btn = e.currentTarget;
+  if(openStatusTxId === txId && statusDropdownPanel.classList.contains('open')){
+    statusDropdownPanel.classList.remove('open');
+    openStatusTxId = null;
+    return;
+  }
+  openStatusTxId = txId;
+  renderStatusDropdownPanel(txId);
+  const rect = btn.getBoundingClientRect();
+  statusDropdownPanel.style.top = (rect.bottom + 4) + 'px';
+  statusDropdownPanel.style.left = Math.min(rect.left, window.innerWidth - 190) + 'px';
+  statusDropdownPanel.classList.add('open');
+};
+async function setTxStatus(txId, status){
+  try{
+    await db.collection(COLLECTION).doc(txId).update({ status });
+  }catch(err){
+    alert('Gagal menyimpan status: ' + err.message);
+  }
+}
+async function addOrEditStatusItem(){
+  const newItem = prompt('Tambah pilihan status baru:\n(mis. Ditunda, Terverifikasi, dll.)');
+  if(!newItem || !newItem.trim()) return;
+  const value = newItem.trim();
+  try{
+    await db.collection(SETTINGS_COLLECTION).doc(STATUS_ITEMS_DOC).set({
+      items: firebase.firestore.FieldValue.arrayUnion(value)
+    }, { merge: true });
+  }catch(err){
+    alert('Gagal menambah pilihan: ' + err.message);
+  }
+}
+statusDropdownPanel.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  const optEl = e.target.closest('.combo-option');
+  if(!optEl) return;
+  const txId = statusDropdownPanel.dataset.txId;
+  if(optEl.id === 'btnEditStatusItems'){
+    addOrEditStatusItem();
+    return;
+  }
+  if(optEl.dataset.value !== undefined && txId){
+    setTxStatus(txId, optEl.dataset.value);
+  }
+  statusDropdownPanel.classList.remove('open');
+  openStatusTxId = null;
+});
+document.addEventListener('click', (e) => {
+  if(!statusDropdownPanel.contains(e.target)){
+    statusDropdownPanel.classList.remove('open');
+    openStatusTxId = null;
+  }
+});
+window.addEventListener('scroll', () => {
+  statusDropdownPanel.classList.remove('open');
+  openStatusTxId = null;
+}, true);
+
 /* ===== Realtime listener ===== */
 db.collection(COLLECTION).orderBy('tanggal', 'desc').onSnapshot((snap) => {
   transactions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -1655,8 +1777,8 @@ function nominalOf(t){
   return (parseFloat(t.kategori)||0) * (parseFloat(t.jumlah)||0);
 }
 document.getElementById('btnExportTx').addEventListener('click', () => {
-  const rows = getFiltered().map(t => [t.tanggal||'', t.jumlah||'', t.kategori||'', nominalOf(t)||'', t.keterangan||'', t.jenis==='masuk'?'Masuk':'Keluar']);
-  downloadCSV('riwayat-transaksi.csv', ['Tanggal','Jumlah','RATE','Nominal (Rp)','Keterangan','Jenis'], rows);
+  const rows = getFiltered().map(t => [t.tanggal||'', t.jumlah||'', t.kategori||'', nominalOf(t)||'', t.keterangan||'', t.jenis==='masuk'?'Masuk':'Keluar', t.status||'']);
+  downloadCSV('riwayat-transaksi.csv', ['Tanggal','Jumlah','RATE','Nominal (Rp)','Keterangan','Jenis','Status'], rows);
 });
 
 /* ===== Render ===== */
@@ -1680,7 +1802,7 @@ function render(){
   // Table
   const tbody = document.getElementById('txTableBody');
   if(filtered.length === 0){
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Tidak ada catatan yang cocok.</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Tidak ada catatan yang cocok.</td></tr>';
   }else{
     tbody.innerHTML = filtered.map(t => `
       <tr>
@@ -1690,6 +1812,7 @@ function render(){
         <td style="text-align:left;" class="amt-cell ${t.jenis}">${t.jenis === 'masuk' ? '' : 'Rp ' + rupiah(nominalOf(t))}</td>
         <td>${escapeHtml(t.keterangan||'')}</td>
         <td><span class="badge ${t.jenis}">${t.jenis === 'masuk' ? 'Masuk' : 'Keluar'}</span></td>
+        <td>${renderStatusTrigger(t)}</td>
         <td><button class="del-btn" onclick="deleteTx('${t.id}')" title="Hapus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></button></td>
       </tr>
     `).join('');
@@ -1851,5 +1974,6 @@ document.querySelectorAll('input[type="date"]').forEach(el => {
   });
 });
 </script>
+<div id="statusDropdownPanel"></div>
 </body>
 </html>
