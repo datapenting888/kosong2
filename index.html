@@ -42,8 +42,13 @@
       repeating-linear-gradient(180deg, transparent 0 38px, rgba(255,255,255,0.03) 38px 39px),
       var(--paper);
     color: var(--ink);
-    font-family:'Inter', sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
     -webkit-font-smoothing:antialiased;
+  }
+  /* Seluruh isi dashboard (tulisan & angka) memakai Arial, tegas dan jelas */
+  body, body *{
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-variant-numeric: normal;
   }
   ::selection{ background: var(--gold-bright); color:#0A0E1A; }
 
@@ -750,7 +755,7 @@
           </div>
           <div class="field">
             <label>Quantity</label>
-            <input type="number" id="mQty" placeholder="0" min="0">
+            <input type="text" inputmode="numeric" id="mQty" placeholder="0">
           </div>
           <div class="field">
             <label>Keterangan</label>
@@ -819,7 +824,7 @@
           </div>
           <div class="field">
             <label>Jumlah</label>
-            <input type="number" id="fJumlah" placeholder="0" min="0">
+            <input type="text" inputmode="numeric" id="fJumlah" placeholder="0">
           </div>
           <div class="field" id="fRateField" style="display:none;">
             <label>RATE</label>
@@ -889,7 +894,7 @@
         <div class="slip-grid slip-grid-rokok">
           <div class="field">
             <label>Quantity</label>
-            <input type="number" id="rQty" placeholder="0" min="0">
+            <input type="text" inputmode="numeric" id="rQty" placeholder="0">
           </div>
           <div class="field">
             <label>Nama Barang</label>
@@ -900,11 +905,11 @@
           </div>
           <div class="field">
             <label>Nominal</label>
-            <input type="number" id="rNominal" placeholder="0" min="0">
+            <input type="text" inputmode="numeric" id="rNominal" placeholder="0">
           </div>
           <div class="field">
             <label>Harga Terjual</label>
-            <input type="number" id="rHarga" placeholder="0" min="0" readonly style="opacity:.75; cursor:not-allowed;">
+            <input type="text" inputmode="numeric" id="rHarga" placeholder="0" readonly style="opacity:.75; cursor:not-allowed;">
           </div>
           <div class="field">
             <label>Keterangan</label>
@@ -1016,6 +1021,23 @@ let trendChart, categoryChart;
 
 /* ===== Helpers ===== */
 const rupiah = (n) => Math.round(n).toLocaleString('id-ID');
+
+/* ===== Format ribuan otomatis (titik setiap 3 digit) untuk input angka ===== */
+function formatRibuanStr(digitsOnly){
+  if(!digitsOnly) return '';
+  return parseInt(digitsOnly, 10).toLocaleString('id-ID');
+}
+function parseRibuan(str){
+  if(!str) return 0;
+  const digitsOnly = String(str).replace(/\D/g, '');
+  return digitsOnly ? parseInt(digitsOnly, 10) : 0;
+}
+function attachRibuanFormatting(input){
+  input.addEventListener('input', () => {
+    const digitsOnly = input.value.replace(/\D/g, '');
+    input.value = formatRibuanStr(digitsOnly);
+  });
+}
 document.getElementById('todayDate').textContent = new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
 document.getElementById('fTanggal').valueAsDate = new Date();
 
@@ -1041,9 +1063,10 @@ btnKeluar.addEventListener('click', () => { setType('keluar'); });
 /* ===== Nominal (Rp) = Jumlah x Kategori (otomatis) ===== */
 const fJumlahInput = document.getElementById('fJumlah');
 const fNominalInput = document.getElementById('fNominal');
+attachRibuanFormatting(fJumlahInput);
 function updateFNominal(){
-  const jumlah = parseFloat(fJumlahInput.value) || 0;
-  const kategoriAngka = parseFloat(document.getElementById('fKategori').value) || 0;
+  const jumlah = parseRibuan(fJumlahInput.value);
+  const kategoriAngka = parseRibuan(document.getElementById('fKategori').value);
   fNominalInput.value = 'Rp ' + rupiah(jumlah * kategoriAngka);
 }
 fJumlahInput.addEventListener('input', updateFNominal);
@@ -1070,7 +1093,7 @@ async function saveTx(){
   try{
     await db.collection(COLLECTION).add({
       jenis: currentType,
-      jumlah: parseFloat(jumlahRaw) || 0,
+      jumlah: parseRibuan(jumlahRaw),
       tanggal: tanggal || null,
       kategori: currentType === 'masuk' ? '' : (kategori || 'Lainnya'),
       keterangan: keterangan || '(tanpa keterangan)',
@@ -1103,10 +1126,12 @@ async function deleteTx(id){
 const rQtyInput = document.getElementById('rQty');
 const rNominalInput = document.getElementById('rNominal');
 const rHargaInput = document.getElementById('rHarga');
+attachRibuanFormatting(rQtyInput);
+attachRibuanFormatting(rNominalInput);
 function updateRHarga(){
-  const qty = parseFloat(rQtyInput.value) || 0;
-  const nominal = parseFloat(rNominalInput.value) || 0;
-  rHargaInput.value = qty * nominal;
+  const qty = parseRibuan(rQtyInput.value);
+  const nominal = parseRibuan(rNominalInput.value);
+  rHargaInput.value = formatRibuanStr(String(qty * nominal));
 }
 rQtyInput.addEventListener('input', updateRHarga);
 rNominalInput.addEventListener('input', updateRHarga);
@@ -1127,10 +1152,10 @@ async function saveRokok(){
 
   try{
     await db.collection(ROKOK_COLLECTION).add({
-      quantity: parseFloat(qtyRaw) || 0,
+      quantity: parseRibuan(qtyRaw),
       barang: barang || '-',
-      nominal: parseFloat(nominalRaw) || 0,
-      harga: parseFloat(hargaRaw) || 0,
+      nominal: parseRibuan(nominalRaw),
+      harga: parseRibuan(hargaRaw),
       keterangan: ket || '-',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -1210,6 +1235,7 @@ document.getElementById('btnExportRokok').addEventListener('click', () => {
 
 /* ===== Barang Masuk: simpan saat tombol centang diklik (boleh belum lengkap) ===== */
 document.getElementById('mTanggal').valueAsDate = new Date();
+attachRibuanFormatting(document.getElementById('mQty'));
 
 async function saveMasuk(){
   const btn = document.getElementById('mSaveBtn');
@@ -1227,7 +1253,7 @@ async function saveMasuk(){
     await db.collection(MASUK_COLLECTION).add({
       tanggal: tanggal || null,
       barang: barang || '-',
-      quantity: parseFloat(qtyRaw) || 0,
+      quantity: parseRibuan(qtyRaw),
       keterangan: ket || '-',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -1514,6 +1540,7 @@ let kategoriItems = [...KATEGORI_ITEMS_DEFAULT];
 const fKategoriInput = document.getElementById('fKategori');
 const fKategoriDropdown = document.getElementById('fKategoriDropdown');
 const fKategoriComboWrap = document.getElementById('fKategoriComboWrap');
+attachRibuanFormatting(fKategoriInput);
 
 function renderFKategoriDropdown(){
   const q = fKategoriInput.value.trim().toLowerCase();
@@ -1543,7 +1570,7 @@ async function addNewFKategoriItem(){
     await db.collection(SETTINGS_COLLECTION).doc(KATEGORI_ITEMS_DOC).set({
       items: firebase.firestore.FieldValue.arrayUnion(value)
     }, { merge: true });
-    fKategoriInput.value = value;
+    fKategoriInput.value = formatRibuanStr(String(parseRibuan(value)));
     updateFNominal();
   }catch(err){
     alert('Gagal menambah pilihan: ' + err.message);
@@ -1559,7 +1586,7 @@ fKategoriDropdown.addEventListener('mousedown', (e) => {
   if(optEl.id === 'btnAddFKategoriItem'){
     addNewFKategoriItem();
   } else if(optEl.dataset.value !== undefined){
-    fKategoriInput.value = optEl.dataset.value;
+    fKategoriInput.value = formatRibuanStr(String(parseRibuan(optEl.dataset.value)));
     updateFNominal();
   }
   fKategoriDropdown.classList.remove('open');
