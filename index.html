@@ -724,7 +724,17 @@
     <!-- ================= VIEW: TRANSAKSI ================= -->
     <div class="view" id="view-transaksi">
       <section class="panel">
-        <h2>Catat Transaksi</h2>
+        <h2 style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <span>Catat Transaksi</span>
+          <div id="fTotalMasukBox" style="order:2; display:flex; align-items:center; gap:8px; padding:6px 14px; border:1px solid var(--rule); border-radius:8px; background:rgba(255,255,255,0.03); white-space:nowrap;">
+            <span style="font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);">Total Pemasukan</span>
+            <span id="fTotalMasukValue" style="font-family:'Fraunces', serif; font-size:16px; font-weight:600; color:var(--green);">Rp 0</span>
+          </div>
+          <div id="fTotalKeluarBox" style="order:3; display:flex; align-items:center; gap:8px; padding:6px 14px; border:1px solid var(--rule); border-radius:8px; background:rgba(255,255,255,0.03); white-space:nowrap;">
+            <span style="font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);">Total Pengeluaran</span>
+            <span id="fTotalKeluarValue" style="font-family:'Fraunces', serif; font-size:16px; font-weight:600; color:var(--red);">Rp 0</span>
+          </div>
+        </h2>
         <div class="field field-jenis">
           <div class="type-toggle">
             <button type="button" id="btnMasuk" class="masuk">Masuk</button>
@@ -794,11 +804,11 @@
         <h2 style="display:flex; align-items:center; gap:10px;">
           <span>Catat Penjualan Rokok</span>
           <div id="rTotalQtyBox" style="order:2; display:flex; align-items:center; gap:8px; padding:6px 14px; border:1px solid var(--rule); border-radius:8px; background:rgba(255,255,255,0.03); white-space:nowrap;">
-            <span style="font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);">Total Quantity Hari Ini</span>
+            <span style="font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);">Total Quantity Terjual</span>
             <span id="rTotalQtyValue" style="font-family:'Fraunces', serif; font-size:16px; font-weight:600; color:var(--blue);">0</span>
           </div>
           <div id="rTotalIdrBox" style="order:3; display:flex; align-items:center; gap:8px; padding:6px 14px; border:1px solid var(--rule); border-radius:8px; background:rgba(255,255,255,0.03); white-space:nowrap;">
-            <span style="font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);">Total IDR Hari Ini</span>
+            <span style="font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);">Total IDR Terjual</span>
             <span id="rTotalIdrValue" style="font-family:'Fraunces', serif; font-size:16px; font-weight:600; color:var(--green);">Rp 0</span>
           </div>
         </h2>
@@ -833,7 +843,10 @@
         <h2>Penjualan Rokok</h2>
         <div class="toolbar-row">
           <div class="date-range">
-            <input type="date" id="rDateFrom" title="Tanggal">
+            <input type="date" id="rDateFrom" title="Dari Tanggal">
+            <span class="arrow">→</span>
+            <input type="date" id="rDateTo" title="Sampai Tanggal">
+            <button type="button" class="clear-range" id="rClearRange" title="Reset ke hari ini">×</button>
           </div>
           <button type="button" class="btn-export" id="btnExportRokok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export CSV</button>
         </div>
@@ -1031,26 +1044,23 @@ async function deleteRokok(id){
 db.collection(ROKOK_COLLECTION).orderBy('createdAt', 'desc').onSnapshot((snap) => {
   rokokSales = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   renderRokok();
-  updateRokokTodayTotals();
+  updateRokokTotals();
 }, (err) => { console.error(err); });
 
-function updateRokokTodayTotals(){
-  const pad = n => String(n).padStart(2,'0');
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
-  const todaySales = rokokSales.filter(r => tsToDateStr(r.createdAt) === todayStr);
-  const totalQty = todaySales.reduce((sum, r) => sum + (parseFloat(r.quantity) || 0), 0);
-  const totalIdr = todaySales.reduce((sum, r) => sum + (parseFloat(r.harga) || 0), 0);
+function updateRokokTotals(){
+  const totalQty = rokokSales.reduce((sum, r) => sum + (parseFloat(r.quantity) || 0), 0);
+  const totalIdr = rokokSales.reduce((sum, r) => sum + (parseFloat(r.harga) || 0), 0);
   document.getElementById('rTotalQtyValue').textContent = totalQty.toLocaleString('id-ID');
   document.getElementById('rTotalIdrValue').textContent = 'Rp ' + rupiah(totalIdr);
 }
 
 function renderRokok(){
   const body = document.getElementById('rokokTableBody');
-  const tgl = document.getElementById('rDateFrom').value;
-  const filtered = rokokSales.filter(r => inDateRange(tsToDateStr(r.createdAt), tgl, tgl));
+  const from = document.getElementById('rDateFrom').value;
+  const to = document.getElementById('rDateTo').value;
+  const filtered = rokokSales.filter(r => inDateRange(tsToDateStr(r.createdAt), from, to));
   if(filtered.length === 0){
-    body.innerHTML = '<tr class="empty-row"><td colspan="6">' + (rokokSales.length === 0 ? 'Belum ada catatan penjualan rokok.' : 'Tidak ada catatan pada tanggal ini.') + '</td></tr>';
+    body.innerHTML = '<tr class="empty-row"><td colspan="6">' + (rokokSales.length === 0 ? 'Belum ada catatan penjualan rokok.' : 'Tidak ada catatan pada rentang tanggal ini.') + '</td></tr>';
     return;
   }
   body.innerHTML = filtered.map(r => `
@@ -1065,10 +1075,18 @@ function renderRokok(){
   `).join('');
 }
 document.getElementById('rDateFrom').valueAsDate = new Date();
+document.getElementById('rDateTo').valueAsDate = new Date();
 document.getElementById('rDateFrom').addEventListener('change', renderRokok);
+document.getElementById('rDateTo').addEventListener('change', renderRokok);
+document.getElementById('rClearRange').addEventListener('click', () => {
+  document.getElementById('rDateFrom').valueAsDate = new Date();
+  document.getElementById('rDateTo').valueAsDate = new Date();
+  renderRokok();
+});
 document.getElementById('btnExportRokok').addEventListener('click', () => {
-  const tgl = document.getElementById('rDateFrom').value;
-  const rows = rokokSales.filter(r => inDateRange(tsToDateStr(r.createdAt), tgl, tgl))
+  const from = document.getElementById('rDateFrom').value;
+  const to = document.getElementById('rDateTo').value;
+  const rows = rokokSales.filter(r => inDateRange(tsToDateStr(r.createdAt), from, to))
     .map(r => [tsToDateStr(r.createdAt), r.quantity||'', r.barang||'', r.harga||'', r.keterangan||'']);
   downloadCSV('penjualan-rokok.csv', ['Tanggal','Quantity','Barang Terjual','Harga Terjual','Keterangan'], rows);
 });
@@ -1391,6 +1409,13 @@ function render(){
   document.getElementById('totalMasuk').textContent = rupiah(masuk);
   document.getElementById('totalKeluar').textContent = rupiah(keluar);
   document.getElementById('totalSaldo').textContent = rupiah(masuk - keluar);
+
+  // Total nominal (Rp) Pemasukan & Pengeluaran di halaman Transaksi (akumulasi semua transaksi)
+  const nominalOf = t => (parseFloat(t.kategori)||0) * (parseFloat(t.jumlah)||0);
+  const nominalMasuk = transactions.filter(t=>t.jenis==='masuk').reduce((s,t)=>s+nominalOf(t),0);
+  const nominalKeluar = transactions.filter(t=>t.jenis==='keluar').reduce((s,t)=>s+nominalOf(t),0);
+  document.getElementById('fTotalMasukValue').textContent = 'Rp ' + rupiah(nominalMasuk);
+  document.getElementById('fTotalKeluarValue').textContent = 'Rp ' + rupiah(nominalKeluar);
 
   // Table
   const tbody = document.getElementById('txTableBody');
