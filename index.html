@@ -507,22 +507,36 @@
   }
   .badge.masuk{ background:var(--green-soft); color:var(--green); }
   .badge.keluar{ background:var(--red-soft); color:var(--red); }
-  .badge.done{ background:var(--green-soft); color:var(--green); }
-  .badge.pending{ background:rgba(255,201,77,0.16); color:var(--gold); }
   .status-trigger{
-    display:inline-flex; align-items:center; gap:5px;
+    display:inline-flex; align-items:center; gap:6px;
     font-size:11px;
-    padding:3px 9px;
+    font-weight:600;
+    padding:4px 10px;
     border-radius:20px;
     font-family:'IBM Plex Mono', monospace;
-    border:1px dashed var(--rule-strong);
+    border:1px solid var(--rule-strong);
     background:rgba(255,255,255,0.03);
     color:var(--ink-soft);
     cursor:pointer;
     transition: all .15s ease;
   }
-  .status-trigger:hover{ border-color:var(--gold); color:var(--ink); }
-  .status-trigger svg{ width:11px; height:11px; flex:0 0 11px; }
+  .status-trigger:hover{ filter:brightness(1.15); border-color:var(--gold); }
+  .status-trigger svg{ width:11px; height:11px; flex:0 0 11px; opacity:.7; }
+  .status-trigger .status-dot{
+    width:7px; height:7px; border-radius:50%; flex:0 0 7px;
+  }
+  .status-trigger.done{
+    background:rgba(51,230,166,0.16);
+    border-color:rgba(51,230,166,0.5);
+    color:var(--green);
+  }
+  .status-trigger.done .status-dot{ background:var(--green); box-shadow:0 0 6px 0 rgba(51,230,166,0.8); }
+  .status-trigger.pending{
+    background:rgba(255,201,77,0.16);
+    border-color:rgba(255,201,77,0.5);
+    color:var(--gold);
+  }
+  .status-trigger.pending .status-dot{ background:var(--gold); box-shadow:0 0 6px 0 rgba(255,201,77,0.8); }
   #statusDropdownPanel{
     position:fixed;
     min-width:170px;
@@ -1677,7 +1691,8 @@ function renderStatusTrigger(t){
   const cls = statusBadgeClass(t.status);
   const label = t.status ? escapeHtml(t.status) : 'Pilih status';
   const dotSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
-  return `<button type="button" class="status-trigger ${cls}" onclick="openStatusDropdown(event, '${t.id}')">${label}${dotSvg}</button>`;
+  const statusDot = cls ? '<span class="status-dot"></span>' : '';
+  return `<button type="button" class="status-trigger ${cls}" onclick="openStatusDropdown(event, '${t.id}')">${statusDot}${label}${dotSvg}</button>`;
 }
 function renderStatusDropdownPanel(txId){
   let html = statusItems.map(s => `<div class="combo-option" data-value="${escapeHtml(s)}">${escapeHtml(s)}</div>`).join('');
@@ -1795,7 +1810,11 @@ function render(){
   const idrKeluar = keluar;
   document.getElementById('totalMasuk').textContent = rupiah(idrMasuk - idrKeluar);
   document.getElementById('totalKeluar').textContent = rupiah(keluar);
-  document.getElementById('totalSaldo').textContent = rupiah(masuk - keluar);
+
+  // Saldo Bersih = akumulasi kolom Nominal (Rp) seluruh transaksi (semua tanggal)
+  const nominalMasukTotal = transactions.filter(t=>t.jenis==='masuk').reduce((s,t)=>s+nominalOf(t),0);
+  const nominalKeluarTotal = transactions.filter(t=>t.jenis==='keluar').reduce((s,t)=>s+nominalOf(t),0);
+  document.getElementById('totalSaldo').textContent = rupiah(nominalMasukTotal - nominalKeluarTotal);
 
   // Total nominal (Rp) Pemasukan & Pengeluaran di halaman Transaksi (akumulasi semua transaksi, diambil dari kolom Jumlah + total penjualan rokok)
   document.getElementById('fTotalMasukValue').textContent = rupiah(idrMasuk);
