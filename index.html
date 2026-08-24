@@ -378,7 +378,8 @@
     gap:14px;
     align-items:end;
   }
-  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field{ display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .field input, .field select{ min-width:0; }
   .field label{
     font-size:11px; text-transform:uppercase; letter-spacing:1.2px; color:var(--ink-soft);
   }
@@ -429,7 +430,7 @@
   .slip-grid-5{ grid-template-columns: repeat(4, 1fr) 46px; }
   .slip-grid-rokok{ grid-template-columns: repeat(5, 1fr) 46px; }
   .hidden{ display:none !important; }
-  .save-field{ display:flex; flex-direction:column; gap:6px; }
+  .save-field{ display:flex; flex-direction:column; gap:6px; min-width:0; }
   .save-field label{ visibility:hidden; }
   .save-check-btn{
     display:flex; align-items:center; justify-content:center;
@@ -498,6 +499,7 @@
   .amt-cell{ font-family:'IBM Plex Mono', monospace; font-weight:600; text-align:right; }
   .amt-cell.masuk{ color:var(--green); }
   .amt-cell.keluar{ color:var(--red); }
+  .nominal-cell{ color:var(--gold); }
   .badge{
     font-size:11px;
     padding:3px 9px;
@@ -953,8 +955,8 @@
             <span id="rTotalQtyValue" style="font-family:'Fraunces', serif; font-size:16px; font-weight:600; color:var(--blue);">0</span>
           </div>
           <div id="rTotalIdrBox" style="order:3; display:flex; align-items:center; gap:8px; padding:6px 14px; border:1px solid var(--rule); border-radius:8px; background:rgba(255,255,255,0.03); white-space:nowrap;">
-            <span style="font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);">Total IDR Terjual</span>
-            <span id="rTotalIdrValue" style="font-family:'Fraunces', serif; font-size:16px; font-weight:600; color:var(--green);">Rp 0</span>
+            <span style="font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);">Total IDR</span>
+            <span id="rTotalIdrValue" style="font-family:'Fraunces', serif; font-size:16px; font-weight:600; color:var(--green);">0</span>
           </div>
         </h2>
         <div class="slip-grid slip-grid-rokok">
@@ -1283,7 +1285,7 @@ function updateRokokTotals(){
   const totalQty = rokokSales.reduce((sum, r) => sum + (parseFloat(r.quantity) || 0), 0);
   const totalIdrRokok = rokokSales.reduce((sum, r) => sum + (parseFloat(r.harga) || 0), 0);
   document.getElementById('rTotalQtyValue').textContent = totalQty.toLocaleString('id-ID');
-  document.getElementById('rTotalIdrValue').textContent = 'Rp ' + rupiah(totalIdrRokok);
+  document.getElementById('rTotalIdrValue').textContent = rupiah(totalIdrRokok);
   render();
 }
 
@@ -1856,7 +1858,7 @@ function render(){
         <td>${formatTanggal(t.tanggal)}</td>
         <td style="text-align:left;" class="amt-cell ${t.jenis}">${rupiah(t.jumlah)}</td>
         <td>${escapeHtml(t.kategori||'')}</td>
-        <td style="text-align:left;" class="amt-cell ${t.jenis}">${t.jenis === 'masuk' ? '' : 'Rp ' + rupiah(nominalOf(t))}</td>
+        <td style="text-align:left;" class="amt-cell nominal-cell">${t.jenis === 'masuk' ? '' : 'Rp ' + rupiah(nominalOf(t))}</td>
         <td>${escapeHtml(t.keterangan||'')}</td>
         <td><span class="badge ${t.jenis}">${t.jenis === 'masuk' ? 'Masuk' : 'Keluar'}</span></td>
         <td>${renderStatusTrigger(t)}</td>
