@@ -507,6 +507,18 @@
   }
   .badge.masuk{ background:var(--green-soft); color:var(--green); }
   .badge.keluar{ background:var(--red-soft); color:var(--red); }
+  .badge.barangmasuk{ background:rgba(90,182,255,0.16); color:var(--blue); }
+  .badge.rokok{ background:rgba(181,136,255,0.16); color:var(--purple); }
+  .badge.sumber{
+    font-size:10px;
+    padding:2px 8px;
+    border-radius:20px;
+    font-family:'IBM Plex Mono', monospace;
+    display:inline-block;
+    border:1px solid var(--rule);
+    color:var(--ink-soft);
+    background:rgba(255,255,255,0.03);
+  }
   .status-trigger{
     display:inline-flex; align-items:center; gap:6px;
     font-size:11px;
@@ -763,10 +775,19 @@
       </section>
 
       <section class="panel">
-        <h2>5 Transaksi Terbaru</h2>
+        <h2>Aktivitas Terbaru (Semua Menu)</h2>
         <table class="recent-mini">
+          <thead>
+            <tr>
+              <th style="text-align:left; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); padding:6px; border-bottom:1px solid var(--rule);">Tanggal</th>
+              <th style="text-align:left; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); padding:6px; border-bottom:1px solid var(--rule);">Sumber</th>
+              <th style="text-align:left; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); padding:6px; border-bottom:1px solid var(--rule);">Detail</th>
+              <th style="text-align:left; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); padding:6px; border-bottom:1px solid var(--rule);">Jenis</th>
+              <th style="text-align:right; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); padding:6px; border-bottom:1px solid var(--rule);">Nominal</th>
+            </tr>
+          </thead>
           <tbody id="recentTableBody">
-            <tr class="empty-row"><td colspan="4">Belum ada catatan.</td></tr>
+            <tr class="empty-row"><td colspan="5">Belum ada catatan.</td></tr>
           </tbody>
         </table>
       </section>
@@ -1352,6 +1373,7 @@ db.collection(MASUK_COLLECTION).orderBy('tanggal', 'desc').onSnapshot((snap) => 
   barangMasuk = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   renderMasuk();
   updateTotalStockBarang();
+  render();
 }, (err) => { console.error(err); });
 
 function updateTotalStockBarang(){
@@ -1844,20 +1866,67 @@ function render(){
 }
 
 function renderRecent(){
-  const recent = [...transactions]
-    .sort((a,b) => (b.tanggal||'').localeCompare(a.tanggal||''))
-    .slice(0, 5);
+  const combined = [];
+
+  transactions.forEach(t => {
+    combined.push({
+      tanggal: t.tanggal || '',
+      sortKey: t.tanggal || '',
+      sumber: 'Transaksi',
+      sumberCls: t.jenis === 'masuk' ? 'masuk' : 'keluar',
+      detail: t.keterangan && t.keterangan !== '(tanpa keterangan)' ? t.keterangan : '(tanpa keterangan)',
+      jenisLabel: t.jenis === 'masuk' ? 'Masuk' : 'Keluar',
+      jenisCls: t.jenis,
+      nominal: t.jenis === 'masuk' ? (parseFloat(t.jumlah)||0) : nominalOf(t),
+      amtCls: t.jenis
+    });
+  });
+
+  barangMasuk.forEach(m => {
+    combined.push({
+      tanggal: m.tanggal || '',
+      sortKey: m.tanggal || '',
+      sumber: 'Barang Masuk',
+      sumberCls: 'barangmasuk',
+      detail: `${m.barang || '-'}${m.keterangan && m.keterangan !== '-' ? ' · ' + m.keterangan : ''}`,
+      jenisLabel: 'Qty ' + (Number(m.quantity||0)).toLocaleString('id-ID'),
+      jenisCls: 'masuk',
+      nominal: null,
+      amtCls: ''
+    });
+  });
+
+  rokokSales.forEach(r => {
+    const dStr = tsToDateStr(r.createdAt);
+    combined.push({
+      tanggal: dStr,
+      sortKey: dStr,
+      sumber: 'Penjualan Rokok',
+      sumberCls: 'rokok',
+      detail: `${r.barang || '-'}${r.keterangan && r.keterangan !== '-' ? ' · ' + r.keterangan : ''} (Qty ${Number(r.quantity||0).toLocaleString('id-ID')})`,
+      jenisLabel: 'Terjual',
+      jenisCls: 'masuk',
+      nominal: parseFloat(r.harga) || 0,
+      amtCls: 'masuk'
+    });
+  });
+
+  const recent = combined
+    .sort((a,b) => (b.sortKey||'').localeCompare(a.sortKey||''))
+    .slice(0, 8);
+
   const body = document.getElementById('recentTableBody');
   if(recent.length === 0){
-    body.innerHTML = '<tr class="empty-row"><td colspan="4">Belum ada catatan. Buka menu Transaksi untuk mulai mencatat.</td></tr>';
+    body.innerHTML = '<tr class="empty-row"><td colspan="5">Belum ada catatan. Mulai mencatat di menu Transaksi, Barang Masuk, atau Penjualan Rokok.</td></tr>';
     return;
   }
-  body.innerHTML = recent.map(t => `
+  body.innerHTML = recent.map(r => `
     <tr>
-      <td>${formatTanggal(t.tanggal)}</td>
-      <td>${escapeHtml(t.keterangan||'')}</td>
-      <td><span class="badge ${t.jenis}">${t.jenis === 'masuk' ? 'Masuk' : 'Keluar'}</span></td>
-      <td style="text-align:left;" class="amt-cell ${t.jenis}">${rupiah(t.jumlah)}</td>
+      <td>${formatTanggal(r.tanggal)}</td>
+      <td><span class="badge sumber">${escapeHtml(r.sumber)}</span></td>
+      <td>${escapeHtml(r.detail||'')}</td>
+      <td><span class="badge ${r.jenisCls}">${escapeHtml(r.jenisLabel)}</span></td>
+      <td style="text-align:right;" class="amt-cell ${r.amtCls}">${r.nominal === null ? '-' : rupiah(r.nominal)}</td>
     </tr>
   `).join('');
 }
