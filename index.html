@@ -1831,15 +1831,16 @@ function render(){
 
   // Total Pengeluaran (Ringkasan) = akumulasi total kolom Nominal (Rp) seluruh transaksi Keluar (Jumlah x RATE, semua tanggal)
   const totalNominalRp = transactions.filter(t=>t.jenis==='keluar').reduce((s,t)=>s+nominalOf(t),0);
-  const idrKeluar = totalNominalRp;
-  document.getElementById('totalMasuk').textContent = rupiah(idrMasuk - idrKeluar);
+
+  // IDR KELUAR (basis kolom Jumlah, bukan Nominal Rp) seluruh transaksi Keluar, semua tanggal — dipakai juga di menu Transaksi
+  const totalJumlahKeluar = transactions.filter(t=>t.jenis==='keluar').reduce((s,t)=>s+(Number(t.jumlah)||0),0);
+
+  // Total IDR (Ringkasan) = IDR MASUK - IDR KELUAR (menu Transaksi, basis kolom Jumlah)
+  document.getElementById('totalMasuk').textContent = rupiah(idrMasuk - totalJumlahKeluar);
   document.getElementById('totalKeluar').textContent = rupiah(totalNominalRp);
 
   // Saldo Bersih = Total IDR Masuk - Total Pengeluaran (kolom Nominal Rp)
   document.getElementById('totalSaldo').textContent = rupiah(idrMasuk - totalNominalRp);
-
-  // IDR KELUAR (halaman Transaksi) = akumulasi kolom Jumlah (bukan Nominal Rp) seluruh transaksi Keluar, semua tanggal
-  const totalJumlahKeluar = transactions.filter(t=>t.jenis==='keluar').reduce((s,t)=>s+(Number(t.jumlah)||0),0);
 
   // Total nominal (Rp) Pemasukan & Pengeluaran di halaman Transaksi (akumulasi semua transaksi, diambil dari kolom Jumlah + total penjualan rokok)
   document.getElementById('fTotalMasukValue').textContent = rupiah(idrMasuk);
