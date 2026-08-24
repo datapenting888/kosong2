@@ -1829,7 +1829,7 @@ function render(){
   const totalIdrRokok = rokokSales.reduce((sum, r) => sum + (parseFloat(r.harga) || 0), 0);
   const idrMasuk = masuk + totalIdrRokok;
 
-  // Total Pengeluaran = akumulasi total kolom Nominal (Rp) seluruh transaksi Keluar (Jumlah x RATE, semua tanggal)
+  // Total Pengeluaran (Ringkasan) = akumulasi total kolom Nominal (Rp) seluruh transaksi Keluar (Jumlah x RATE, semua tanggal)
   const totalNominalRp = transactions.filter(t=>t.jenis==='keluar').reduce((s,t)=>s+nominalOf(t),0);
   const idrKeluar = totalNominalRp;
   document.getElementById('totalMasuk').textContent = rupiah(idrMasuk - idrKeluar);
@@ -1838,9 +1838,12 @@ function render(){
   // Saldo Bersih = Total IDR Masuk - Total Pengeluaran (kolom Nominal Rp)
   document.getElementById('totalSaldo').textContent = rupiah(idrMasuk - totalNominalRp);
 
+  // IDR KELUAR (halaman Transaksi) = akumulasi kolom Jumlah (bukan Nominal Rp) seluruh transaksi Keluar, semua tanggal
+  const totalJumlahKeluar = transactions.filter(t=>t.jenis==='keluar').reduce((s,t)=>s+(Number(t.jumlah)||0),0);
+
   // Total nominal (Rp) Pemasukan & Pengeluaran di halaman Transaksi (akumulasi semua transaksi, diambil dari kolom Jumlah + total penjualan rokok)
   document.getElementById('fTotalMasukValue').textContent = rupiah(idrMasuk);
-  document.getElementById('fTotalKeluarValue').textContent = rupiah(idrKeluar);
+  document.getElementById('fTotalKeluarValue').textContent = rupiah(totalJumlahKeluar);
 
   // Table
   const tbody = document.getElementById('txTableBody');
