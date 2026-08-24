@@ -1811,10 +1811,10 @@ function render(){
   document.getElementById('totalMasuk').textContent = rupiah(idrMasuk - idrKeluar);
   document.getElementById('totalKeluar').textContent = rupiah(keluar);
 
-  // Saldo Bersih = akumulasi kolom Nominal (Rp) seluruh transaksi (semua tanggal)
-  const nominalMasukTotal = transactions.filter(t=>t.jenis==='masuk').reduce((s,t)=>s+nominalOf(t),0);
-  const nominalKeluarTotal = transactions.filter(t=>t.jenis==='keluar').reduce((s,t)=>s+nominalOf(t),0);
-  document.getElementById('totalSaldo').textContent = rupiah(nominalMasukTotal - nominalKeluarTotal);
+  // Saldo Bersih = akumulasi total kolom Nominal (Rp) seluruh transaksi (semua tanggal)
+  // Kolom Nominal (Rp) hanya terisi untuk transaksi Keluar (Jumlah x RATE), jadi dijumlahkan langsung
+  const totalNominalRp = transactions.filter(t=>t.jenis==='keluar').reduce((s,t)=>s+nominalOf(t),0);
+  document.getElementById('totalSaldo').textContent = rupiah(totalNominalRp);
 
   // Total nominal (Rp) Pemasukan & Pengeluaran di halaman Transaksi (akumulasi semua transaksi, diambil dari kolom Jumlah + total penjualan rokok)
   document.getElementById('fTotalMasukValue').textContent = rupiah(idrMasuk);
