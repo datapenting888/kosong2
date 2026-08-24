@@ -766,7 +766,7 @@
         </div>
         <div class="stamp keluar">
           <div class="stamp-tag">keluar</div>
-          <div class="label">Total Pengeluaran</div>
+          <div class="label">Total Saldo</div>
           <div class="amount" id="totalKeluar">0</div>
         </div>
         <div class="stamp saldo">
@@ -1839,7 +1839,7 @@ function render(){
 
   // Total IDR (Ringkasan) = IDR MASUK - IDR KELUAR (menu Transaksi, basis kolom Jumlah)
   document.getElementById('totalMasuk').textContent = rupiah(idrMasuk - totalJumlahKeluar);
-  document.getElementById('totalKeluar').textContent = rupiah(totalNominalRp);
+  document.getElementById('totalKeluar').textContent = 'Rp ' + rupiah(totalNominalRp);
 
   // Saldo Bersih = Total IDR Masuk - Total Pengeluaran (kolom Nominal Rp)
   document.getElementById('totalSaldo').textContent = rupiah(idrMasuk - totalNominalRp);
